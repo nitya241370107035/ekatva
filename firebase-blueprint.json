@@ -1,0 +1,201 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "The user accounts collection containing role and profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["weaver", "secretary", "buyer"] },
+        "cooperativeId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role", "displayName"]
+    },
+    "Weaver": {
+      "title": "Weaver",
+      "description": "Profiles for weavers containing details of skills and loom capacities",
+      "type": "object",
+      "properties": {
+        "weaverId": { "type": "string" },
+        "cooperativeId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "phone": { "type": "string" },
+        "skillTags": { "type": "array", "items": { "type": "string" } },
+        "experience": { "type": "number" },
+        "numberOfLooms": { "type": "number" },
+        "dailyCapacity": { "type": "number" },
+        "aadharNumber": { "type": "string" },
+        "bankAccount": {
+          "type": "object",
+          "properties": {
+            "bankName": { "type": "string" },
+            "accountNumber": { "type": "string" },
+            "ifsc": { "type": "string" }
+          },
+          "required": ["bankName", "accountNumber", "ifsc"]
+        },
+        "address": {
+          "type": "object",
+          "properties": {
+            "street": { "type": "string" },
+            "city": { "type": "string" },
+            "state": { "type": "string" },
+            "pincode": { "type": "string" }
+          },
+          "required": ["street", "city", "state", "pincode"]
+        },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["weaverId", "cooperativeId", "displayName", "phone", "skillTags", "experience", "numberOfLooms", "dailyCapacity", "bankAccount", "address"]
+    },
+    "Cooperative": {
+      "title": "Cooperative",
+      "description": "Weaving cooperatives in the platform",
+      "type": "object",
+      "properties": {
+        "cooperativeId": { "type": "string" },
+        "name": { "type": "string" },
+        "location": { "type": "string" },
+        "description": { "type": "string" },
+        "memberCount": { "type": "number" }
+      },
+      "required": ["cooperativeId", "name", "location", "description", "memberCount"]
+    },
+    "Notice": {
+      "title": "Notice",
+      "description": "Public announcements or notices released by cooperative secretary",
+      "type": "object",
+      "properties": {
+        "noticeId": { "type": "string" },
+        "cooperativeId": { "type": "string" },
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "priority": { "type": "string", "enum": ["normal", "urgent"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["noticeId", "cooperativeId", "title", "body", "priority", "createdAt", "createdBy"]
+    },
+    "Meeting": {
+      "title": "Meeting",
+      "description": "Cooperative meetings and recorded minutes",
+      "type": "object",
+      "properties": {
+        "meetingId": { "type": "string" },
+        "cooperativeId": { "type": "string" },
+        "title": { "type": "string" },
+        "date": { "type": "string" },
+        "agenda": { "type": "string" },
+        "minutes": { "type": "string" },
+        "decisions": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["meetingId", "cooperativeId", "title", "date", "agenda", "minutes", "decisions", "createdAt", "createdBy"]
+    },
+    "Grievance": {
+      "title": "Grievance",
+      "description": "Grievance ticket submitted by a weaver",
+      "type": "object",
+      "properties": {
+        "grievanceId": { "type": "string" },
+        "cooperativeId": { "type": "string" },
+        "weaverId": { "type": "string" },
+        "weaverName": { "type": "string" },
+        "subject": { "type": "string" },
+        "category": { "type": "string", "enum": ["payment", "raw material", "other"] },
+        "status": { "type": "string", "enum": ["open", "in_progress", "resolved"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["grievanceId", "cooperativeId", "weaverId", "weaverName", "subject", "category", "status", "createdAt", "updatedAt"]
+    },
+    "GrievanceMessage": {
+      "title": "GrievanceMessage",
+      "description": "Messages sent within a grievance ticket",
+      "type": "object",
+      "properties": {
+        "messageId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderRole": { "type": "string", "enum": ["weaver", "secretary"] },
+        "text": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["messageId", "senderId", "senderName", "senderRole", "text", "timestamp"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Wage, advance, and deduction transaction records for weavers",
+      "type": "object",
+      "properties": {
+        "paymentId": { "type": "string" },
+        "cooperativeId": { "type": "string" },
+        "weaverId": { "type": "string" },
+        "weaverName": { "type": "string" },
+        "type": { "type": "string", "enum": ["wage", "advance", "deduction"] },
+        "amount": { "type": "number" },
+        "description": { "type": "string" },
+        "jobCardId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["paymentId", "cooperativeId", "weaverId", "weaverName", "type", "amount", "description", "createdAt", "createdBy"]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Dail attendance records for weavers",
+      "type": "object",
+      "properties": {
+        "attendanceId": { "type": "string" },
+        "weaverId": { "type": "string" },
+        "cooperativeId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "dateStr": { "type": "string" }
+      },
+      "required": ["attendanceId", "weaverId", "cooperativeId", "timestamp", "dateStr"]
+    }
+  },
+  "firestore": {
+    "/attendance/{attendanceId}": {
+      "schema": "Attendance",
+      "description": "Daily attendance logs for weavers"
+    },
+    "/users/{uid}": {
+      "schema": "User",
+      "description": "The custom user records tied to Firebase Auth UID"
+    },
+    "/payments/{paymentId}": {
+      "schema": "Payment",
+      "description": "Weaver payment transactions"
+    },
+    "/weavers/{uid}": {
+      "schema": "Weaver",
+      "description": "Weaver profile data"
+    },
+    "/cooperatives/{coopId}": {
+      "schema": "Cooperative",
+      "description": "Cooperatives info"
+    },
+    "/notices/{noticeId}": {
+      "schema": "Notice",
+      "description": "Notice board entries"
+    },
+    "/meetings/{meetingId}": {
+      "schema": "Meeting",
+      "description": "Recorded committee meetings"
+    },
+    "/grievances/{grievanceId}": {
+      "schema": "Grievance",
+      "description": "Weaver grievance tickets"
+    },
+    "/grievances/{grievanceId}/messages/{messageId}": {
+      "schema": "GrievanceMessage",
+      "description": "Messages inside a grievance ticket"
+    }
+  }
+}

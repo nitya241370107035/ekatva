@@ -1,0 +1,6 @@
+{
+  "name": "Ekatva (एकत्व)",
+  "description": "A digital cooperative platform for Indian weaving communities with a warm vintage handloom diary aesthetic.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,400 @@
+@import "tailwindcss";
+
+@theme {
+  --font-heading: "Playfair Display", serif;
+  --font-body: "Lora", serif;
+  
+  --color-loom-wood: #8B4513;
+  --color-loom-wood-light: #A0522D;
+  --color-loom-sand: #D4A574;
+  --color-loom-gold: #C8A45C;
+  --color-loom-parchment: #FDF5E6;
+  --color-loom-cream: #FFF8F0;
+  --color-loom-ink: #3E2723;
+  --color-loom-ink-light: #6D4C41;
+  --color-loom-beige: #D7B89C;
+  --color-loom-error: #B22222;
+}
+
+:root {
+  --background: 45 33% 96%;  /* parchment */
+  --foreground: 12 30% 15%;  /* ink */
+  --card: 30 100% 97%;       /* cream */
+  --card-foreground: 12 30% 15%;
+  --primary: 25 75% 25%;     /* wood */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 32 50% 70%;   /* sand */
+  --secondary-foreground: 12 30% 15%;
+  --muted: 15 20% 50%;
+  --muted-foreground: 12 20% 40%;
+  --accent: 43 55% 55%;      /* gold */
+  --accent-foreground: 12 30% 15%;
+  --destructive: 0 60% 35%;  /* error */
+  --border: 30 25% 75%;      /* beige */
+  --input: 30 25% 75%;
+  --ring: 43 55% 55%;        /* gold */
+  --radius: 0.75rem;
+}
+
+/* Base style settings for the vintage diary feel */
+body {
+  background-color: #FDF5E6; /* loom-parchment */
+  background-image: radial-gradient(#D7B89C 1.5px, transparent 1.5px);
+  background-size: 32px 32px;
+  background-repeat: repeat;
+  font-family: "Lora", serif;
+  color: #3E2723; /* loom-ink */
+  font-size: 1.125rem; /* text-lg / 18px */
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Typography styles */
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Playfair Display", serif;
+  color: #3E2723; /* loom-ink */
+  font-weight: 700;
+}
+
+/* Custom class overrides to match the vintage feel */
+.bg-loom-pattern {
+  background-image: url('data:image/svg+xml,%3Csvg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M20 0L40 20L20 40L0 20Z" fill="%23D7B89C" fill-opacity="0.15"/%3E%3C/svg%3E');
+  background-size: 20px 20px;
+  background-repeat: repeat;
+}
+
+/* Custom styles for handloom elements */
+.vintage-card {
+  border-top: 4px solid #C8A45C !important; /* loom-gold */
+  background-color: #FFF8F0; /* loom-cream */
+  border-radius: 0.75rem;
+  border-left: 1px solid #D7B89C;
+  border-right: 1px solid #D7B89C;
+  border-bottom: 2px solid #C4A484;
+  box-shadow: 0 8px 24px -6px rgba(139, 69, 19, 0.12), 0 4px 12px -2px rgba(139, 69, 19, 0.05);
+}
+
+.vintage-button {
+  background-color: #8B4513; /* loom-wood */
+  color: #FFF8F0; /* loom-cream */
+  font-family: "Playfair Display", serif;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  border-bottom: 3px solid #5C2D0C;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 4px 6px rgba(62, 39, 35, 0.15);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.vintage-button:hover {
+  background-color: #A0522D; /* loom-wood-light */
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 6px 8px rgba(62, 39, 35, 0.2);
+}
+.vintage-button:active {
+  transform: translateY(1px);
+  border-bottom-width: 1px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.vintage-input {
+  border: 1px solid #D7B89C; /* loom-beige */
+  background-color: #FFF8F0; /* loom-cream */
+  border-radius: 0.75rem;
+  color: #3E2723;
+  padding: 0.75rem 1rem;
+  transition: all 0.2s ease-in-out;
+}
+.vintage-input:focus {
+  outline: none;
+  border-color: #C8A45C; /* loom-gold */
+  box-shadow: 0 0 0 3px rgba(200, 164, 92, 0.25);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #FDF5E6;
+}
+::-webkit-scrollbar-thumb {
+  background: #D7B89C;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #C8A45C;
+}
+
+/* Loom spinning animation for loader */
+@keyframes spin-slow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+/* Printing styles for Digital ID Card */
+@media print {
+  /* Hide every parent, sidebar, button and header */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Make only the ID card container visible */
+  #weaver-printable-id-card, 
+  #weaver-printable-id-card * {
+    visibility: visible;
+  }
+  
+  /* Reset document background */
+  body {
+    background: none !important;
+    background-color: white !important;
+  }
+  
+  /* Position and style ID card for printing precisely */
+  #weaver-printable-id-card {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(1.15);
+    width: 3.5in !important;
+    border: 4px solid #8B4513 !important;
+    background-color: #FFF8F0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    box-shadow: none !important;
+    border-radius: 12px !important;
+    padding: 24px !important;
+  }
+}
+
+/* Vintage themed toasts */
+.vintage-toast {
+  background-color: #3E2723 !important; /* loom-ink */
+  color: #FFF8F0 !important; /* loom-cream */
+  border: 2px solid #C8A45C !important; /* loom-gold */
+  border-radius: 0.75rem !important;
+  font-family: "Playfair Display", serif !important;
+  font-weight: 600 !important;
+  font-size: 1.125rem !important; /* large and readable */
+}
+
+/* Custom PWA Animations for Stage 8 */
+@keyframes pulse-gold {
+  0% {
+    box-shadow: 0 0 0 0 rgba(200, 164, 92, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(200, 164, 92, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(200, 164, 92, 0);
+  }
+}
+.animate-pulse-gold {
+  animation: pulse-gold 2s infinite;
+}
+
+@keyframes slide-down {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+.animate-slide-down {
+  animation: slide-down 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.animate-fade-in {
+  animation: fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slide-in {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+.animate-slide-in {
+  animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom Weaving Thread Separator Animation */
+@keyframes thread-weave {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 20px 0%;
+  }
+}
+.animate-thread-weave {
+  animation: thread-weave 3s linear infinite;
+}
+
+/* Shimmer Gold Sweep (Card hover top border shine) */
+.shimmer-gold {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-gold::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 60%;
+  height: 4px; /* Matches the top gold border precisely */
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0) 20%,
+    rgba(255, 223, 137, 0.8) 50%,
+    rgba(255, 255, 255, 0) 80%,
+    transparent 100%
+  );
+  z-index: 10;
+  pointer-events: none;
+}
+.shimmer-gold:hover::before {
+  animation: sweep-shimmer 2s infinite ease-in-out;
+}
+@keyframes sweep-shimmer {
+  0% { left: -150%; }
+  100% { left: 150%; }
+}
+
+/* Breathing vintage background pattern */
+.pattern-breathe {
+  animation: bg-breathe 40s infinite ease-in-out;
+}
+@keyframes bg-breathe {
+  0%, 100% { background-position: 0px 0px; }
+  50% { background-position: 30px 30px; }
+}
+
+/* Dye Soaking Thread Fill effect for outline buttons */
+.dye-fill-button {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  transition: color 0.3s ease;
+}
+.dye-fill-button::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  background-color: #C8A45C; /* loom-gold */
+  z-index: -1;
+  transition: height 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.dye-fill-button:hover::after {
+  height: 100%;
+}
+
+/* Loom shuttle vibration micro-interaction */
+@keyframes loom-shuttle-vibrate {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(-1px, 1px) rotate(-0.5deg); }
+  40% { transform: translate(1px, -1px) rotate(0.5deg); }
+  60% { transform: translate(-1px, -1px) rotate(-0.5deg); }
+  80% { transform: translate(1px, 1px) rotate(0.5deg); }
+}
+.loom-shuttle-vibe:hover {
+  animation: loom-shuttle-vibrate 0.15s infinite linear;
+}
+
+/* Typewriter animation for recognized speech text */
+.typewriter-char {
+  display: inline-block;
+  opacity: 0;
+  animation: typing 0.05s forwards;
+}
+@keyframes typing {
+}
+
+/* Print styles for Government Scheme Matchmaker */
+@media print {
+  body, html {
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #000000 !important;
+    font-family: serif !important;
+  }
+
+  /* Hide all interactive and layout chrome */
+  header, 
+  footer, 
+  nav, 
+  aside, 
+  button, 
+  a, 
+  .print\:hidden,
+  #job-sakhi-unsupported,
+  .EkatvaHumsafar {
+    display: none !important;
+  }
+
+  /* Reset layout constraints for full page print */
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+
+  /* Show the printable container exactly on page */
+  .fixed.inset-0.z-50 {
+    position: relative !important;
+    background: transparent !important;
+    z-index: auto !important;
+    display: block !important;
+    padding: 0 !important;
+  }
+
+  .bg-loom-cream.border-2.border-loom-gold {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Custom typography scaling for paper */
+  h2 {
+    font-size: 20pt !important;
+    margin-bottom: 12pt !important;
+    color: #000000 !important;
+  }
+
+  .whitespace-pre-wrap {
+    font-size: 11pt !important;
+    line-height: 1.6 !important;
+    font-family: monospace !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+}
+
+

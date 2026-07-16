@@ -1,0 +1,434 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { SecretaryLayout } from '../../components/layout/SecretaryLayout';
+import { 
+  getWeaversByCooperative, 
+  getRawMaterialStock, 
+  createJobCard 
+} from '../../firebase/firestore';
+import { WeaverProfile, RawMaterialStock, RawMaterialIssued } from '../../types';
+import { ArrowLeft, Plus, Trash2, Calendar, ClipboardList } from 'lucide-react';
+import { Toast } from '../../components/ui/Toast';
+
+export const CreateJobCard: React.FC = () => {
+  const { userProfile, currentUser } = useAuth();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [weavers, setWeavers] = useState<WeaverProfile[]>([]);
+  const [stockList, setStockList] = useState<RawMaterialStock[]>([]);
+  const [toastMessage, setToastMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Form states
+  const [title, setTitle] = useState('');
+  const [designCode, setDesignCode] = useState('');
+  const [quantity, setQuantity] = useState(1);
+  const [assignedTo, setAssignedTo] = useState('');
+  const [deadline, setDeadline] = useState('');
+  const [wagePerPiece, setWagePerPiece] = useState(0);
+
+  // Dynamic Raw Materials issued list
+  const [rawMaterialsIssued, setRawMaterialsIssued] = useState<RawMaterialIssued[]>([
+    { materialName: '', quantity: 1, unit: 'किलोग्राम' }
+  ]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!userProfile?.cooperativeId) return;
+      try {
+        const [weaversData, stockData] = await Promise.all([
+          getWeaversByCooperative(userProfile.cooperativeId),
+          getRawMaterialStock(userProfile.cooperativeId)
+        ]);
+        setWeavers(weaversData);
+        setStockList(stockData);
+        if (weaversData.length > 0) {
+          setAssignedTo(weaversData[0].weaverId);
+        }
+      } catch (err) {
+        console.error("Error fetching form requirements:", err);
+      }
+    };
+    fetchData();
+  }, [userProfile?.cooperativeId]);
+
+  const handleAddMaterialRow = () => {
+    setRawMaterialsIssued([
+      ...rawMaterialsIssued,
+      { materialName: '', quantity: 1, unit: 'किलोग्राम' }
+    ]);
+  };
+
+  const handleRemoveMaterialRow = (idx: number) => {
+    const updated = [...rawMaterialsIssued];
+    updated.splice(idx, 1);
+    setRawMaterialsIssued(updated);
+  };
+
+  const handleMaterialChange = (idx: number, field: keyof RawMaterialIssued, value: any) => {
+    const updated = [...rawMaterialsIssued];
+    if (field === 'materialName') {
+      updated[idx].materialName = value;
+      // Auto fill the unit if we have it in stock
+      const stockItem = stockList.find(s => s.materialName.toLowerCase() === value.toLowerCase());
+      if (stockItem) {
+        updated[idx].unit = stockItem.unit;
+      }
+    } else if (field === 'quantity') {
+      updated[idx].quantity = Number(value);
+    } else {
+      updated[idx].unit = value;
+    }
+    setRawMaterialsIssued(updated);
+  };
+
+  // Quick lookup to check if a specific material row has enough stock
+  const getStockAvailability = (row: RawMaterialIssued) => {
+    if (!row.materialName) return null;
+    const stockItem = stockList.find(
+      s => s.materialName.trim().toLowerCase() === row.materialName.trim().toLowerCase()
+    );
+    if (!stockItem) return { exists: false, available: 0, enough: false };
+    return {
+      exists: true,
+      available: stockItem.totalQuantity,
+      enough: stockItem.totalQuantity >= row.quantity
+    };
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage('');
+    
+    if (!userProfile?.cooperativeId || !currentUser?.uid) return;
+    if (!assignedTo) {
+      setErrorMessage('कृपया कार्य के लिए एक बुनकर चुनें।');
+      return;
+    }
+
+    // Filter out rows with empty material names
+    const materialsToIssue = rawMaterialsIssued.filter(row => row.materialName.trim() !== '');
+    if (materialsToIssue.length === 0) {
+      setErrorMessage('कृपया कम से कम एक कच्चा माल दर्ज करें।');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const selectedWeaver = weavers.find(w => w.weaverId === assignedTo);
+      const assignedToName = selectedWeaver ? selectedWeaver.displayName : 'बुनकर';
+
+      await createJobCard({
+        cooperativeId: userProfile.cooperativeId,
+        title: title.trim(),
+        designCode: designCode.trim().toUpperCase(),
+        quantity: Number(quantity),
+        assignedTo,
+        assignedToName,
+        rawMaterialsIssued: materialsToIssue,
+        deadline,
+        wagePerPiece: Number(wagePerPiece)
+      }, currentUser.uid);
+
+      setToastMessage('कार्य कार्ड सफलतापूर्वक बनाया और स्टॉक से काटा गया!');
+      setTimeout(() => {
+        navigate('/secretary/production');
+      }, 1500);
+    } catch (err: any) {
+      console.error(err);
+      setErrorMessage(err.message || 'कार्य कार्ड बनाने में विफल। कृपया पुनः प्रयास करें।');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <SecretaryLayout>
+      {toastMessage && (
+        <Toast message={toastMessage} onClose={() => setToastMessage('')} />
+      )}
+
+      {/* Header and Go Back */}
+      <div className="mb-6">
+        <button
+          onClick={() => navigate('/secretary/production')}
+          className="flex items-center gap-1.5 text-loom-wood hover:text-loom-wood-light font-heading font-semibold transition-all cursor-pointer text-base"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          उत्पादन बोर्ड पर वापस जाएं
+        </button>
+      </div>
+
+      <div className="max-w-3xl mx-auto">
+        <div className="vintage-card p-6 sm:p-8">
+          <div className="border-b-2 border-loom-beige pb-4 mb-6 flex items-center gap-3">
+            <ClipboardList className="w-8 h-8 text-loom-gold shrink-0" />
+            <div>
+              <h1 className="font-heading text-2xl sm:text-3xl font-bold text-loom-wood">
+                नया कार्य कार्ड जारी करें (Create Job Card)
+              </h1>
+              <p className="font-body text-loom-ink/70 text-sm mt-0.5">
+                बुनकर को नया कार्य सौंपने और सामग्री जारी करने के लिए विवरण भरें।
+              </p>
+            </div>
+          </div>
+
+          {errorMessage && (
+            <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl text-red-700 text-sm font-semibold flex items-center gap-2">
+              <span>⚠️</span>
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            
+            {/* Grid 1: Basic Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-heading font-bold text-loom-wood mb-1.5">
+                  शीर्षक (Job Title) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="जैसे: बनारसी साड़ी - डिजाइन #102"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full px-4 py-2.5 border-2 border-loom-beige rounded-xl focus:border-loom-gold focus:outline-none bg-white text-loom-ink font-body"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-heading font-bold text-loom-wood mb-1.5">
+                  डिज़ाइन कोड (Design Code) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="जैसे: BN-102"
+                  value={designCode}
+                  onChange={(e) => setDesignCode(e.target.value)}
+                  className="w-full px-4 py-2.5 border-2 border-loom-beige rounded-xl focus:border-loom-gold focus:outline-none bg-white text-loom-ink font-body uppercase"
+                />
+              </div>
+            </div>
+
+            {/* Grid 2: Weaver Selection and Quantity */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-heading font-bold text-loom-wood mb-1.5">
+                  बुनकर चुनें (Assign Weaver) *
+                </label>
+                {weavers.length === 0 ? (
+                  <div className="p-3 bg-loom-sand/20 border-2 border-dashed border-loom-beige rounded-xl text-sm font-body text-loom-ink/70">
+                    सहकारी समिति में कोई बुनकर नहीं मिला।
+                  </div>
+                ) : (
+                  <select
+                    required
+                    value={assignedTo}
+                    onChange={(e) => setAssignedTo(e.target.value)}
+                    className="w-full px-4 py-2.5 border-2 border-loom-beige rounded-xl focus:border-loom-gold focus:outline-none bg-white text-loom-ink font-heading"
+                  >
+                    {weavers.map((w) => (
+                      <option key={w.weaverId} value={w.weaverId}>
+                        {w.displayName} ({w.skillTags.slice(0, 2).join(', ')})
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-heading font-bold text-loom-wood mb-1.5">
+                    मात्रा (Qty / Pieces) *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={quantity}
+                    onChange={(e) => setQuantity(Number(e.target.value))}
+                    className="w-full px-4 py-2.5 border-2 border-loom-beige rounded-xl focus:border-loom-gold focus:outline-none bg-white text-loom-ink font-body"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-heading font-bold text-loom-wood mb-1.5">
+                    मज़दूरी प्रति पीस (₹) *
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={wagePerPiece}
+                    onChange={(e) => setWagePerPiece(Number(e.target.value))}
+                    className="w-full px-4 py-2.5 border-2 border-loom-beige rounded-xl focus:border-loom-gold focus:outline-none bg-white text-loom-ink font-body"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Deadline */}
+            <div>
+              <label className="block text-sm font-heading font-bold text-loom-wood mb-1.5 flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-loom-gold" />
+                कार्य पूरा करने की अंतिम तिथि (Deadline) *
+              </label>
+              <input
+                type="date"
+                required
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                className="w-full px-4 py-2.5 border-2 border-loom-beige rounded-xl focus:border-loom-gold focus:outline-none bg-white text-loom-ink font-body"
+              />
+            </div>
+
+            {/* Raw Material Selection */}
+            <div className="border-t-2 border-dashed border-loom-beige pt-6">
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="font-heading text-lg font-bold text-loom-wood">
+                  कच्चा माल जारी करें (Issue Raw Materials)
+                </h4>
+                <button
+                  type="button"
+                  onClick={handleAddMaterialRow}
+                  className="bg-loom-sand hover:bg-loom-beige text-loom-wood px-3 py-1.5 rounded-lg font-heading text-xs font-bold flex items-center gap-1 cursor-pointer transition-all border border-loom-beige/50"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  और जोड़ें (Add Material)
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {rawMaterialsIssued.map((row, idx) => {
+                  const check = getStockAvailability(row);
+                  return (
+                    <div 
+                      key={idx} 
+                      className="p-4 bg-loom-sand/10 border border-loom-beige/50 rounded-xl space-y-3"
+                    >
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                        <div className="md:col-span-5">
+                          <label className="block text-xs font-heading font-bold text-loom-wood mb-1">
+                            सामग्री का नाम (Select Stock Material)
+                          </label>
+                          {stockList.length === 0 ? (
+                            <input
+                              type="text"
+                              required
+                              placeholder="जैसे: रेशम धागा"
+                              value={row.materialName}
+                              onChange={(e) => handleMaterialChange(idx, 'materialName', e.target.value)}
+                              className="w-full px-3 py-2 border border-loom-beige rounded-lg focus:outline-none focus:border-loom-gold bg-white text-sm text-loom-ink font-body"
+                            />
+                          ) : (
+                            <select
+                              required
+                              value={row.materialName}
+                              onChange={(e) => handleMaterialChange(idx, 'materialName', e.target.value)}
+                              className="w-full px-3 py-2 border border-loom-beige rounded-lg focus:outline-none focus:border-loom-gold bg-white text-sm text-loom-ink font-body"
+                            >
+                              <option value="">-- सामग्री चुनें --</option>
+                              {stockList.map(s => (
+                                <option key={s.stockId} value={s.materialName}>
+                                  {s.materialName} ({s.totalQuantity} {s.unit} उपलब्ध)
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
+
+                        <div className="md:col-span-3">
+                          <label className="block text-xs font-heading font-bold text-loom-wood mb-1">
+                            जारी की जाने वाली मात्रा
+                          </label>
+                          <input
+                            type="number"
+                            min="0.1"
+                            step="any"
+                            required
+                            value={row.quantity}
+                            onChange={(e) => handleMaterialChange(idx, 'quantity', e.target.value)}
+                            className="w-full px-3 py-2 border border-loom-beige rounded-lg focus:outline-none focus:border-loom-gold bg-white text-sm text-loom-ink font-body"
+                          />
+                        </div>
+
+                        <div className="md:col-span-3">
+                          <label className="block text-xs font-heading font-bold text-loom-wood mb-1">
+                            इकाई (Unit)
+                          </label>
+                          <select
+                            value={row.unit}
+                            onChange={(e) => handleMaterialChange(idx, 'unit', e.target.value)}
+                            className="w-full px-3 py-2 border border-loom-beige rounded-lg focus:outline-none focus:border-loom-gold bg-white text-sm text-loom-ink font-heading"
+                          >
+                            <option value="किलोग्राम">किलोग्राम (kg)</option>
+                            <option value="ग्राम">ग्राम (g)</option>
+                            <option value="मीटर">मीटर (m)</option>
+                            <option value="कोन">कोन (Cone)</option>
+                          </select>
+                        </div>
+
+                        <div className="md:col-span-1 text-center md:pb-1">
+                          {rawMaterialsIssued.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveMaterialRow(idx)}
+                              className="p-2 text-loom-error hover:bg-red-50 rounded-lg cursor-pointer transition-colors"
+                              title="हटाएं"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Stock availability sub-panel */}
+                      {check && (
+                        <div className="text-xs font-body">
+                          {!check.exists ? (
+                            <span className="text-red-600 font-bold">⚠️ यह सामग्री स्टॉक रिकॉर्ड में मौजूद नहीं है!</span>
+                          ) : !check.enough ? (
+                            <span className="text-red-600 font-bold">
+                              ❌ अपर्याप्त स्टॉक! उपलब्ध मात्रा: {check.available} {row.unit} है, जबकि आपको {row.quantity} {row.unit} की आवश्यकता है।
+                            </span>
+                          ) : (
+                            <span className="text-green-700 font-medium">
+                              ✓ स्टॉक में पर्याप्त है (कुल उपलब्ध: {check.available} {row.unit})
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Submission buttons */}
+            <div className="border-t-2 border-loom-beige pt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => navigate('/secretary/production')}
+                className="px-6 py-2.5 bg-loom-beige/40 hover:bg-loom-beige/70 text-loom-wood rounded-xl font-heading font-semibold transition-all cursor-pointer text-base"
+              >
+                रद्द करें
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="vintage-button px-8 py-2.5 text-base"
+              >
+                {loading ? 'कार्य कार्ड जारी किया जा रहा है...' : 'कार्य कार्ड जारी करें'}
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </SecretaryLayout>
+  );
+};
