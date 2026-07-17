@@ -5,9 +5,12 @@ import { getVendors, createVendor, seedVendors } from '../../firebase/firestore'
 import { Vendor } from '../../types';
 import { Plus, Search, Phone, MapPin, Star, User, Layers, ShieldAlert, Truck } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 export const VendorListPage: React.FC = () => {
   const { userProfile } = useAuth();
+  const { t, i18n } = useTranslation();
+  const isEn = i18n.language === 'en';
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [filteredVendors, setFilteredVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +28,17 @@ export const VendorListPage: React.FC = () => {
 
   const availableMaterials = ["रेसम धागा", "सूती धागा", "जरी", "रंगाई सामग्री"];
 
+  const getMaterialLabel = (m: string) => {
+    if (!isEn) return m;
+    const map: Record<string, string> = {
+      "रेसम धागा": "Silk Yarn",
+      "सूती धागा": "Cotton Yarn",
+      "जरी": "Zari",
+      "रंगाई सामग्री": "Dyeing Materials"
+    };
+    return map[m] || m;
+  };
+
   const fetchVendors = async () => {
     try {
       setLoading(true);
@@ -35,7 +49,7 @@ export const VendorListPage: React.FC = () => {
       setFilteredVendors(list);
     } catch (err) {
       console.error("Error fetching vendors:", err);
-      toast.error("विक्रेता सूची लोड करने में त्रुटि हुई", { className: 'vintage-toast' });
+      toast.error(isEn ? "Failed to load vendors list" : "विक्रेता सूची लोड करने में त्रुटि हुई", { className: 'vintage-toast' });
     } finally {
       setLoading(false);
     }
@@ -43,7 +57,7 @@ export const VendorListPage: React.FC = () => {
 
   useEffect(() => {
     fetchVendors();
-  }, []);
+  }, [i18n.language]);
 
   // Filter vendors based on search
   useEffect(() => {
@@ -68,12 +82,12 @@ export const VendorListPage: React.FC = () => {
     e.preventDefault();
 
     if (!name || !contactPerson || !phone || !address) {
-      toast.error("कृपया सभी आवश्यक फ़ील्ड भरें", { className: 'vintage-toast' });
+      toast.error(isEn ? "Please fill all required fields" : "कृपया सभी आवश्यक फ़ील्ड भरें", { className: 'vintage-toast' });
       return;
     }
 
     if (selectedMaterials.length === 0) {
-      toast.error("कृपया कम से कम एक सामग्री चुनें जो वे प्रदान करते हैं", { className: 'vintage-toast' });
+      toast.error(isEn ? "Please select at least one material they supply" : "कृपया कम से कम एक सामग्री चुनें जो वे प्रदान करते हैं", { className: 'vintage-toast' });
       return;
     }
 
@@ -89,7 +103,7 @@ export const VendorListPage: React.FC = () => {
         cooperativeId: userProfile?.cooperativeId || ''
       });
 
-      toast.success("नया विक्रेता सफलतापूर्वक पंजीकृत किया गया!", { className: 'vintage-toast' });
+      toast.success(isEn ? "New vendor registered successfully!" : "नया विक्रेता सफलतापूर्वक पंजीकृत किया गया!", { className: 'vintage-toast' });
       
       // Reset form
       setName('');
@@ -104,7 +118,7 @@ export const VendorListPage: React.FC = () => {
       fetchVendors();
     } catch (err) {
       console.error("Error adding vendor:", err);
-      toast.error("विक्रेता जोड़ने में विफलता", { className: 'vintage-toast' });
+      toast.error(isEn ? "Failed to add vendor" : "विक्रेता जोड़ने में विफलता", { className: 'vintage-toast' });
     } finally {
       setSubmitting(false);
     }
@@ -119,10 +133,12 @@ export const VendorListPage: React.FC = () => {
           <div>
             <h1 className="font-heading text-3xl font-bold text-loom-wood flex items-center gap-2">
               <Truck className="w-8 h-8 text-loom-gold" />
-              स्वीकृत विक्रेता सूची (Approved Vendors)
+              {isEn ? "Approved Vendors" : "स्वीकृत विक्रेता सूची (Approved Vendors)"}
             </h1>
             <p className="font-body text-sm text-loom-ink-light mt-1">
-              सहकारी समिति के लिए कच्चे माल (सूत, जरी, रेशम) की आपूर्ति करने वाले पंजीकृत थोक विक्रेताओं का प्रबंधन करें।
+              {isEn 
+                ? "Manage registered wholesale suppliers supplying raw materials (yarn, zari, silk) to the cooperative."
+                : "सहकारी समिति के लिए कच्चे माल (सूत, जरी, रेशम) की आपूर्ति करने वाले पंजीकृत थोक विक्रेताओं का प्रबंधन करें।"}
             </p>
           </div>
           <button
@@ -130,7 +146,7 @@ export const VendorListPage: React.FC = () => {
             className="vintage-button px-5 py-2.5 flex items-center gap-1.5 shrink-0 text-sm"
           >
             <Plus className="w-4 h-4" />
-            नया विक्रेता जोड़ें (Add Vendor)
+            {isEn ? "Add Vendor" : "नया विक्रेता जोड़ें (Add Vendor)"}
           </button>
         </div>
 
@@ -140,14 +156,16 @@ export const VendorListPage: React.FC = () => {
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-loom-ink-light" />
             <input
               type="text"
-              placeholder="विक्रेता का नाम, संपर्क व्यक्ति या सामग्री खोजें..."
+              placeholder={isEn ? "Search vendor name, contact person or materials..." : "विक्रेता का नाम, संपर्क व्यक्ति या सामग्री खोजें..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-sm bg-loom-cream/40 border border-loom-beige rounded-xl focus:outline-none focus:ring-2 focus:ring-loom-gold focus:border-transparent font-body"
             />
           </div>
           <span className="text-xs font-body text-loom-ink-light sm:ml-auto">
-            कुल: <strong className="text-loom-wood font-bold">{filteredVendors.length}</strong> विक्रेता सक्रिय हैं
+            {isEn 
+              ? `Total: ${filteredVendors.length} active vendors` 
+              : `कुल: ${filteredVendors.length} विक्रेता सक्रिय हैं`}
           </span>
         </div>
 
@@ -155,14 +173,20 @@ export const VendorListPage: React.FC = () => {
         {loading ? (
           <div className="py-24 flex flex-col items-center justify-center gap-2">
             <div className="w-12 h-12 border-4 border-loom-gold border-t-transparent rounded-full animate-spin" />
-            <p className="font-heading text-loom-wood mt-4 text-sm animate-pulse">डेटा प्राप्त किया जा रहा है...</p>
+            <p className="font-heading text-loom-wood mt-4 text-sm animate-pulse">
+              {isEn ? "Fetching vendor list..." : "डेटा प्राप्त किया जा रहा है..."}
+            </p>
           </div>
         ) : filteredVendors.length === 0 ? (
           <div className="vintage-card p-12 text-center max-w-2xl mx-auto">
             <span className="text-6xl block mb-4">🚛</span>
-            <h3 className="font-heading text-2xl font-bold text-loom-wood mb-2">कोई विक्रेता नहीं मिला</h3>
+            <h3 className="font-heading text-2xl font-bold text-loom-wood mb-2">
+              {isEn ? "No Vendors Found" : "कोई विक्रेता नहीं मिला"}
+            </h3>
             <p className="font-body text-base text-loom-ink-light">
-              पंजीकृत विक्रेताओं में कोई परिणाम नहीं मिला। कृपया अपनी खोज बदलें या एक नया विक्रेता जोड़ें।
+              {isEn 
+                ? "No matching registered vendors found. Please refine your search query or add a new vendor."
+                : "पंजीकृत विक्रेताओं में कोई परिणाम नहीं मिला। कृपया अपनी खोज बदलें या एक नया विक्रेता जोड़ें।"}
             </p>
           </div>
         ) : (
@@ -189,21 +213,27 @@ export const VendorListPage: React.FC = () => {
                     <div className="flex items-center gap-2 text-loom-ink">
                       <User className="w-4 h-4 text-loom-gold shrink-0" />
                       <div>
-                        <span className="text-[10px] text-loom-ink-light block leading-none font-bold">संपर्क व्यक्ति</span>
+                        <span className="text-[10px] text-loom-ink-light block leading-none font-bold">
+                          {isEn ? "Contact Person" : "संपर्क व्यक्ति"}
+                        </span>
                         <span className="text-sm font-semibold">{vendor.contactPerson}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-loom-ink">
                       <Phone className="w-4 h-4 text-loom-gold shrink-0" />
                       <div>
-                        <span className="text-[10px] text-loom-ink-light block leading-none font-bold">फ़ोन नंबर</span>
+                        <span className="text-[10px] text-loom-ink-light block leading-none font-bold">
+                          {isEn ? "Phone Number" : "फ़ोन नंबर"}
+                        </span>
                         <span className="font-mono text-sm">{vendor.phone}</span>
                       </div>
                     </div>
                     <div className="flex items-start gap-2 text-loom-ink">
                       <MapPin className="w-4 h-4 text-loom-gold shrink-0 mt-0.5" />
                       <div>
-                        <span className="text-[10px] text-loom-ink-light block leading-none font-bold">कार्यालय पता</span>
+                        <span className="text-[10px] text-loom-ink-light block leading-none font-bold">
+                          {isEn ? "Office Address" : "कार्यालय पता"}
+                        </span>
                         <span className="text-xs text-loom-ink-light">{vendor.address}</span>
                       </div>
                     </div>
@@ -211,14 +241,16 @@ export const VendorListPage: React.FC = () => {
                 </div>
 
                 <div className="border-t border-loom-beige/40 pt-3 mt-auto">
-                  <span className="block text-[10px] font-heading font-bold text-loom-wood mb-1.5 uppercase tracking-wider">आपूर्ति की जाने वाली सामग्री:</span>
+                  <span className="block text-[10px] font-heading font-bold text-loom-wood mb-1.5 uppercase tracking-wider">
+                    {isEn ? "Supplied Materials:" : "आपूर्ति की जाने वाली सामग्री:"}
+                  </span>
                   <div className="flex flex-wrap gap-1">
                     {vendor.materials.map((m, idx) => (
                       <span 
                         key={idx} 
                         className="text-[10px] font-body bg-loom-sand/20 border border-loom-beige text-loom-ink px-2 py-0.5 rounded-md"
                       >
-                        {m}
+                        {getMaterialLabel(m)}
                       </span>
                     ))}
                   </div>
@@ -235,7 +267,9 @@ export const VendorListPage: React.FC = () => {
               <form onSubmit={handleAddVendorSubmit}>
                 {/* Modal Header */}
                 <div className="p-5 border-b border-loom-beige bg-loom-sand/10 flex justify-between items-center">
-                  <h3 className="font-heading text-xl font-bold text-loom-wood">नया विक्रेता पंजीकृत करें</h3>
+                  <h3 className="font-heading text-xl font-bold text-loom-wood">
+                    {isEn ? "Register New Vendor" : "नया विक्रेता पंजीकृत करें"}
+                  </h3>
                   <button
                     type="button"
                     onClick={() => setAddModalOpen(false)}
@@ -250,11 +284,11 @@ export const VendorListPage: React.FC = () => {
                   {/* Vendor Name */}
                   <div className="space-y-1">
                     <label className="block text-xs font-heading font-bold text-loom-wood">
-                      विक्रेता / दुकान का नाम (Vendor/Business Name) <span className="text-loom-error">*</span>
+                      {isEn ? "Vendor / Business Name *" : "विक्रेता / दुकान का नाम (Vendor/Business Name) *"}
                     </label>
                     <input
                       type="text"
-                      placeholder="जैसे: कबीर यार्न डिपो"
+                      placeholder={isEn ? "e.g. Kabir Yarn Depot" : "जैसे: कबीर यार्न डिपो"}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className="w-full vintage-input text-sm"
@@ -266,11 +300,11 @@ export const VendorListPage: React.FC = () => {
                     {/* Contact Person */}
                     <div className="space-y-1">
                       <label className="block text-xs font-heading font-bold text-loom-wood">
-                        संपर्क व्यक्ति (Contact Person) <span className="text-loom-error">*</span>
+                        {isEn ? "Contact Person *" : "संपर्क व्यक्ति (Contact Person) *"}
                       </label>
                       <input
                         type="text"
-                        placeholder="सुरेश कुमार"
+                        placeholder={isEn ? "Suresh Kumar" : "सुरेश कुमार"}
                         value={contactPerson}
                         onChange={(e) => setContactPerson(e.target.value)}
                         className="w-full vintage-input text-sm"
@@ -281,7 +315,7 @@ export const VendorListPage: React.FC = () => {
                     {/* Phone Number */}
                     <div className="space-y-1">
                       <label className="block text-xs font-heading font-bold text-loom-wood">
-                        फ़ोन नंबर (Phone Number) <span className="text-loom-error">*</span>
+                        {isEn ? "Phone Number *" : "फ़ोन नंबर (Phone Number) *"}
                       </label>
                       <input
                         type="tel"
@@ -297,7 +331,7 @@ export const VendorListPage: React.FC = () => {
                   {/* Materials Multi-select */}
                   <div className="space-y-2">
                     <label className="block text-xs font-heading font-bold text-loom-wood">
-                      आपूर्ति की जाने वाली सामग्री (Supplied Materials) <span className="text-loom-error">*</span>
+                      {isEn ? "Supplied Materials *" : "आपूर्ति की जाने वाली सामग्री (Supplied Materials) *"}
                     </label>
                     <div className="grid grid-cols-2 gap-2">
                       {availableMaterials.map((material) => {
@@ -313,7 +347,7 @@ export const VendorListPage: React.FC = () => {
                                 : 'bg-white border-loom-beige text-loom-ink/75 hover:border-loom-beige-dark'
                             }`}
                           >
-                            <span>{material}</span>
+                            <span>{getMaterialLabel(material)}</span>
                             {isSelected && <span className="text-loom-gold font-bold">✓</span>}
                           </button>
                         );
@@ -325,27 +359,27 @@ export const VendorListPage: React.FC = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-1 sm:col-span-1">
                       <label className="block text-xs font-heading font-bold text-loom-wood">
-                        रेटिंग (Rating)
+                        {isEn ? "Rating" : "रेटिंग (Rating)"}
                       </label>
                       <select
                         value={rating}
                         onChange={(e) => setRating(e.target.value)}
                         className="w-full vintage-input text-sm h-11"
                       >
-                        <option value="5">5.0 (उत्कृष्ट)</option>
-                        <option value="4.5">4.5 (बहुत अच्छा)</option>
-                        <option value="4">4.0 (अच्छा)</option>
-                        <option value="3.5">3.5 (मध्यम)</option>
+                        <option value="5">5.0 ({isEn ? "Excellent" : "उत्कृष्ट"})</option>
+                        <option value="4.5">4.5 ({isEn ? "Very Good" : "बहुत अच्छा"})</option>
+                        <option value="4">4.0 ({isEn ? "Good" : "अच्छा"})</option>
+                        <option value="3.5">3.5 ({isEn ? "Average" : "मध्यम"})</option>
                       </select>
                     </div>
 
                     <div className="space-y-1 sm:col-span-2">
                       <label className="block text-xs font-heading font-bold text-loom-wood">
-                        कार्यालय / दुकान का पता (Address) <span className="text-loom-error">*</span>
+                        {isEn ? "Office / Business Address *" : "कार्यालय / दुकान का पता (Address) *"}
                       </label>
                       <input
                         type="text"
-                        placeholder="चौक बाजार, वाराणसी"
+                        placeholder={isEn ? "Chowk Bazar, Varanasi" : "चौक बाजार, वाराणसी"}
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
                         className="w-full vintage-input text-sm"
@@ -362,14 +396,16 @@ export const VendorListPage: React.FC = () => {
                     onClick={() => setAddModalOpen(false)}
                     className="px-4 py-2 rounded-xl text-sm font-heading font-semibold text-loom-wood hover:bg-loom-sand/30 transition-all border border-loom-beige"
                   >
-                    रद्द करें (Cancel)
+                    {isEn ? "Cancel" : "रद्द करें (Cancel)"}
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
                     className="vintage-button px-5 py-2.5 flex items-center gap-1.5 shrink-0 text-sm"
                   >
-                    {submitting ? 'सहेज रहे हैं...' : 'पंजीकृत करें (Register)'}
+                    {submitting 
+                      ? (isEn ? "Saving..." : "सहेज रहे हैं...") 
+                      : (isEn ? "Register" : "पंजीकृत करें (Register)")}
                   </button>
                 </div>
               </form>

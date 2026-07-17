@@ -29,7 +29,8 @@ import { useNavigate } from 'react-router-dom';
 
 export const SecretarySchemes: React.FC = () => {
   const { userProfile } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isEn = i18n.language === 'en';
   const navigate = useNavigate();
   const [schemes, setSchemes] = useState<GovtScheme[]>([]);
   const [coop, setCoop] = useState<Cooperative | null>(null);
@@ -81,7 +82,7 @@ export const SecretarySchemes: React.FC = () => {
 
   useEffect(() => {
     fetchAllData();
-  }, [userProfile]);
+  }, [userProfile, i18n.language]);
 
   const cooperativeData = {
     memberCount: coop?.memberCount || 0,
@@ -94,13 +95,39 @@ export const SecretarySchemes: React.FC = () => {
     setShowSummaryModal(true);
   };
 
+  const getTranslatedSchemeProps = (scheme: GovtScheme) => {
+    const lowercaseName = scheme.name.toLowerCase();
+    let key = '';
+    if (lowercaseName.includes('india handloom brand') || lowercaseName.includes('ihb')) key = 'ihb';
+    else if (lowercaseName.includes('gem') || lowercaseName.includes('marketplace')) key = 'gem';
+    else if (lowercaseName.includes('mudra')) key = 'mudra';
+    else if (lowercaseName.includes('cluster development') || lowercaseName.includes('nhdp')) key = 'nhdp';
+    else if (lowercaseName.includes('vishwakarma') || lowercaseName.includes('pm-mitra')) key = 'pm_vishwakarma';
+    else if (lowercaseName.includes('ayush') || lowercaseName.includes('export')) key = 'ayush';
+
+    if (key) {
+      return {
+        name: t(`schemes.data.${key}.name`, scheme.name),
+        description: t(`schemes.data.${key}.description`, scheme.description),
+        benefits: t(`schemes.data.${key}.benefits`, scheme.benefits)
+      };
+    }
+    return {
+      name: scheme.name,
+      description: scheme.description,
+      benefits: scheme.benefits
+    };
+  };
+
   const getApplicationText = (scheme: GovtScheme) => {
     if (!coop) return '';
     const certLabels = (coop.certifications || []).map(c => 
-      t(`schemes.certifications.${c}`, c)
+      isEn ? (c === 'handloomMark' ? 'Handloom Mark' : c === 'udyamRegistration' ? 'Udyam Registration' : 'GI Tag') : t(`schemes.certifications.${c}`, c)
     ).join(', ') || 'None';
 
-    return `Our cooperative, ${coop.name}, meets the eligibility criteria for the "${scheme.name}" scheme.
+    const { name: translatedName } = getTranslatedSchemeProps(scheme);
+
+    return `Our cooperative, ${coop.name}, meets the eligibility criteria for the "${translatedName}" scheme.
 
 CREDENTIALS SUMMARY:
 - Cooperative Name: ${coop.name}
@@ -116,7 +143,7 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
   const handleCopyToClipboard = (scheme: GovtScheme) => {
     const text = getApplicationText(scheme);
     navigator.clipboard.writeText(text);
-    toast.success(t('schemes.copysuccess', 'सारांश क्लिपबोर्ड पर कॉपी किया गया!'));
+    toast.success(isEn ? "Summary copied to clipboard!" : t('schemes.copysuccess', 'सारांश क्लिपबोर्ड पर कॉपी किया गया!'));
   };
 
   const handlePrint = () => {
@@ -134,12 +161,12 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
       if (certGiTag) updatedCerts.push('giTag');
 
       await updateCooperativeCertifications(coopId, updatedCerts);
-      toast.success(t('schemes.certificationsSaved', 'प्रमाणपत्र सफलतापूर्वक सहेजे गए!'));
+      toast.success(isEn ? "Certifications updated successfully!" : t('schemes.certificationsSaved', 'प्रमाणपत्र सफलतापूर्वक सहेजे गए!'));
       setShowCertModal(false);
       await fetchAllData();
     } catch (err) {
       console.error("Error saving certifications:", err);
-      toast.error('प्रमाणपत्र सहेजने में विफल।');
+      toast.error(isEn ? "Failed to save certifications." : 'प्रमाणपत्र सहेजने में विफल।');
     } finally {
       setSavingCerts(false);
     }
@@ -147,15 +174,18 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
 
   return (
     <SecretaryLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 app-content">
         {/* Page Title Header */}
-        <div className="mb-6 p-6 bg-loom-cream border border-loom-beige rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm print:hidden">
-          <div>
-            <h1 className="font-heading text-3xl font-bold text-loom-wood">
-              {t('schemes.title', 'सरकारी योजनाएं मैचमेकर')}
+        <div className="mb-6 p-6 bg-loom-cream border border-loom-beige rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm print:hidden bg-handloom-weave relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-[5px] bg-gradient-to-r from-loom-gold via-loom-wood to-loom-gold" />
+          <div className="relative z-10">
+            <h1 className="rozha-heading text-3.5xl md:text-4xl font-bold text-loom-wood">
+              {isEn ? "Government Schemes Matchmaker" : t('schemes.title', 'सरकारी योजनाएं मैचमेकर')}
             </h1>
             <p className="font-body text-base text-loom-ink-light mt-1">
-              {t('schemes.tagline', 'अपनी सहकारी समिति के विवरण के आधार पर सही सरकारी योजनाओं की खोज करें।')}
+              {isEn 
+                ? "Discover eligible government schemes based on your cooperative society's profile metrics."
+                : t('schemes.tagline', 'अपनी सहकारी समिति के विवरण के आधार पर सही सरकारी योजनाओं की खोज करें।')}
             </p>
           </div>
           <div className="flex gap-2">
@@ -164,20 +194,20 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
               className="px-5 py-3 bg-loom-gold text-loom-ink hover:bg-loom-gold/90 font-heading font-bold text-sm rounded-xl shadow-sm transition-colors cursor-pointer flex items-center gap-2 border border-loom-wood/10"
             >
               <Settings className="w-4 h-4" />
-              {t('schemes.updateCertifications', 'प्रमाणपत्र अपडेट करें')}
+              {isEn ? "Update Certifications" : t('schemes.updateCertifications', 'प्रमाणपत्र अपडेट करें')}
             </button>
             <button
               onClick={() => navigate('/secretary/certifications')}
               className="px-5 py-3 bg-white border-2 border-loom-wood text-loom-wood hover:bg-loom-cream font-heading font-bold text-sm rounded-xl shadow-sm transition-colors cursor-pointer"
             >
-              प्रमाणपत्र सेटिंग्स
+              {isEn ? "Certificate Settings" : "प्रमाणपत्र सेटिंग्स"}
             </button>
           </div>
         </div>
 
         {loading ? (
           <div className="flex justify-center items-center py-16 print:hidden">
-            <p className="font-heading text-lg text-loom-wood animate-pulse">{t('common.loading', 'लोड हो रहा है...')}</p>
+            <p className="font-heading text-lg text-loom-wood animate-pulse">{isEn ? "Loading..." : t('common.loading', 'लोड हो रहा है...')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 print:hidden">
@@ -186,34 +216,38 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
               <CardHeader className="pb-2">
                 <CardTitle className="font-heading text-xl text-loom-wood flex items-center gap-2">
                   <FileText className="w-5 h-5 text-loom-gold" />
-                  {t('schemes.cooperativeDetails', 'सहकारी समिति का विवरण')}
+                  {isEn ? "Cooperative Details" : t('schemes.cooperativeDetails', 'सहकारी समिति का विवरण')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 font-body text-sm">
                   <div className="p-3 bg-white rounded-xl border border-loom-beige/65">
-                    <span className="text-xs text-loom-ink-light block font-semibold">समिति का नाम (Name)</span>
+                    <span className="text-xs text-loom-ink-light block font-semibold">{isEn ? "Cooperative Name" : "समिति का नाम (Name)"}</span>
                     <span className="font-bold text-loom-wood text-base">{coop?.name}</span>
                   </div>
                   <div className="p-3 bg-white rounded-xl border border-loom-beige/65">
-                    <span className="text-xs text-loom-ink-light block font-semibold">कुल सक्रिय सदस्य (Members)</span>
-                    <span className="font-bold text-loom-wood text-base">{coop?.memberCount} बुनकर</span>
+                    <span className="text-xs text-loom-ink-light block font-semibold">{isEn ? "Active Members" : "कुल सक्रिय सदस्य (Members)"}</span>
+                    <span className="font-bold text-loom-wood text-base">
+                      {isEn ? `${coop?.memberCount} weavers` : `${coop?.memberCount} बुनकर`}
+                    </span>
                   </div>
                   <div className="p-3 bg-white rounded-xl border border-loom-beige/65">
-                    <span className="text-xs text-loom-ink-light block font-semibold">कुल वार्षिक उत्पादन (Production)</span>
-                    <span className="font-bold text-loom-wood text-base">{annualProduction} पीस</span>
+                    <span className="text-xs text-loom-ink-light block font-semibold">{isEn ? "Annual Production" : "कुल वार्षिक उत्पादन (Production)"}</span>
+                    <span className="font-bold text-loom-wood text-base">
+                      {annualProduction} {isEn ? "pcs" : "पीस"}
+                    </span>
                   </div>
                   <div className="p-3 bg-white rounded-xl border border-loom-beige/65">
-                    <span className="text-xs text-loom-ink-light block font-semibold">प्रमाणपत्र (Certifications)</span>
+                    <span className="text-xs text-loom-ink-light block font-semibold">{isEn ? "Certifications" : "प्रमाणपत्र (Certifications)"}</span>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {(coop?.certifications || []).length > 0 ? (
                         coop?.certifications?.map(c => (
                           <span key={c} className="text-[10px] bg-loom-gold/15 text-loom-wood px-2 py-0.5 rounded border border-loom-gold/30 font-semibold">
-                            {t(`schemes.certifications.${c}`, c)}
+                            {isEn ? (c === 'handloomMark' ? 'Handloom Mark' : c === 'udyamRegistration' ? 'Udyam Registration' : 'GI Tag') : t(`schemes.certifications.${c}`, c)}
                           </span>
                         ))
                       ) : (
-                        <span className="text-xs text-loom-ink-light italic">कोई सक्रिय प्रमाणपत्र नहीं</span>
+                        <span className="text-xs text-loom-ink-light italic">{isEn ? "No active certifications" : "कोई सक्रिय प्रमाणपत्र नहीं"}</span>
                       )}
                     </div>
                   </div>
@@ -225,10 +259,11 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
             <div className="space-y-4">
               {schemes.map((scheme) => {
                 const checkResult = checkEligibility(cooperativeData, scheme);
+                const { name: translatedName, description: translatedDesc, benefits: translatedBenefits } = getTranslatedSchemeProps(scheme);
                 return (
                   <div 
                     key={scheme.schemeId} 
-                    className="vintage-card p-6 bg-loom-cream border-2 border-loom-beige hover:border-loom-gold transition-all duration-300 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6"
+                    className="vintage-card bg-handloom-weave handloom-zari-border zari-shimmer-hover p-6 bg-loom-cream border-2 border-loom-beige hover:border-loom-gold transition-all duration-300 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-xl hover:-translate-y-0.5"
                   >
                     {/* Background Seal Watermark */}
                     <div className="absolute right-[-20px] bottom-[-20px] opacity-5 pointer-events-none select-none">
@@ -237,27 +272,27 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
 
                     <div className="space-y-3 max-w-3xl relative z-10">
                       <div className="flex flex-wrap items-center gap-3">
-                        <h3 className="font-heading font-black text-xl text-loom-wood">{scheme.name}</h3>
+                        <h3 className="font-heading font-black text-2xl text-loom-wood rozha-heading">{translatedName}</h3>
                         
                         {/* Eligibility Badge */}
                         {checkResult.eligible ? (
-                          <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 text-xs px-3 py-1 rounded-full border border-emerald-300 font-bold font-heading">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            {t('schemes.eligible', 'पात्र')}
+                          <span className="inline-flex items-center gap-1.5 bg-emerald-950 text-emerald-300 text-xs px-3.5 py-1.5 rounded-full border-2 border-emerald-500 font-bold font-heading shadow-md select-none">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                            {isEn ? "Eligible" : t('schemes.eligible', 'पात्र')}
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 bg-rose-50 text-rose-800 text-xs px-3 py-1 rounded-full border border-rose-300 font-bold font-heading">
-                            <XCircle className="w-3.5 h-3.5" />
-                            {t('schemes.notEligible', 'अपात्र')}
+                          <span className="inline-flex items-center gap-1.5 vintage-wax-seal text-xs px-3.5 py-1.5 rounded-full font-bold select-none">
+                            <XCircle className="w-3.5 h-3.5 text-amber-200" />
+                            {isEn ? "Ineligible" : t('schemes.notEligible', 'अपात्र')}
                           </span>
                         )}
                       </div>
 
-                      <p className="font-body text-base text-loom-ink/90 leading-relaxed">{scheme.description}</p>
+                      <p className="font-body text-base text-loom-ink/90 leading-relaxed">{translatedDesc}</p>
                       
                       <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs font-semibold font-body text-loom-ink-light">
                         <div>
-                          <strong className="text-loom-wood">लाभ (Benefits):</strong> {scheme.benefits}
+                          <strong className="text-loom-wood">{isEn ? "Benefits:" : t('schemes.benefitsLabel', 'लाभ:')}</strong> {translatedBenefits}
                         </div>
                       </div>
 
@@ -266,8 +301,16 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
                         <div className="p-3 bg-rose-50/50 border border-rose-200/80 rounded-xl text-xs text-rose-950 font-body flex items-start gap-2">
                           <XCircle className="w-4 h-4 text-rose-700 shrink-0 mt-0.5" />
                           <span>
-                            <strong>{t('schemes.ineligibilityReason', 'अपात्रता का कारण (Reason):')} </strong>
-                            {t(checkResult.reasonKey, checkResult.reasonParams)}
+                            <strong>{isEn ? "Ineligibility Reason:" : t('schemes.ineligibilityReason', 'अपात्रता का कारण (Reason):')} </strong>
+                            {isEn 
+                              ? (checkResult.reasonKey.includes('MemberCount') 
+                                ? `Active members must be at least ${checkResult.reasonParams?.min} (currently ${checkResult.reasonParams?.current}).` 
+                                : checkResult.reasonKey.includes('AnnualProduction') 
+                                ? `Annual production must be at least ${checkResult.reasonParams?.min} pieces (currently ${checkResult.reasonParams?.current}).`
+                                : checkResult.reasonKey.includes('CertificationRequired')
+                                ? `Requires cert: ${checkResult.reasonParams?.certification === 'handloomMark' ? 'Handloom Mark' : checkResult.reasonParams?.certification === 'udyamRegistration' ? 'Udyam Registration' : 'GI Tag'}.`
+                                : t(checkResult.reasonKey, checkResult.reasonParams))
+                              : t(checkResult.reasonKey, checkResult.reasonParams)}
                           </span>
                         </div>
                       )}
@@ -280,14 +323,14 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
                           className="vintage-button w-full md:w-40 py-3 bg-loom-wood text-white hover:bg-loom-wood-light flex items-center justify-center gap-2 cursor-pointer font-bold text-sm shadow-md"
                         >
                           <Send className="w-4 h-4" />
-                          {t('schemes.applyNow', 'आवेदन करें')}
+                          {isEn ? "Apply Now" : t('schemes.applyNow', 'आवेदन करें')}
                         </button>
                       ) : (
                         <button
                           disabled
                           className="w-full md:w-40 py-3 bg-loom-beige/40 text-loom-ink-light border border-loom-beige/80 rounded-xl flex items-center justify-center gap-2 text-xs font-bold font-heading cursor-not-allowed select-none"
                         >
-                          {t('schemes.notEligible', 'अपात्र')}
+                          {isEn ? "Ineligible" : t('schemes.notEligible', 'अपात्र')}
                         </button>
                       )}
                       <a
@@ -296,7 +339,7 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
                         rel="noopener noreferrer"
                         className="w-full md:w-40 py-2.5 bg-white border border-loom-beige rounded-xl hover:bg-loom-cream text-center font-heading text-xs font-bold text-loom-wood shadow-sm transition-all"
                       >
-                        {t('schemes.portalLink', 'पोर्टल पर देखें')}
+                        {isEn ? "View on Portal" : t('schemes.portalLink', 'पोर्टल पर देखें')}
                       </a>
                     </div>
                   </div>
@@ -309,15 +352,17 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
         {/* Summary Pre-filled Modal */}
         {showSummaryModal && selectedScheme && coop && (
           <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 flex items-center justify-center p-4 print:p-0 print:static print:bg-transparent animate-fade-in">
-            <div className="bg-loom-cream border-2 border-loom-gold max-w-2xl w-full rounded-2xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 relative print:border-none print:shadow-none print:p-0">
+            <div className="bg-loom-cream border-t-8 border-2 border-loom-gold bg-handloom-weave max-w-2xl w-full rounded-2xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 relative print:border-none print:shadow-none print:p-0">
               
               {/* Modal Header */}
               <div className="flex justify-between items-start border-b border-loom-beige pb-4 print:hidden">
                 <div>
                   <span className="text-[10px] uppercase font-bold tracking-widest text-loom-gold block">
-                    {t('schemes.preFilledSummary', 'आवेदन पूर्व-भराव सारांश')}
+                    {isEn ? "Application Pre-filled Summary" : t('schemes.preFilledSummary', 'आवेदन पूर्व-भराव सारांश')}
                   </span>
-                  <h2 className="font-heading text-2xl font-black text-loom-wood mt-1">{selectedScheme.name}</h2>
+                  <h2 className="font-heading text-2xl font-black text-loom-wood rozha-heading mt-1">
+                    {getTranslatedSchemeProps(selectedScheme).name}
+                  </h2>
                 </div>
                 <button 
                   onClick={() => setShowSummaryModal(false)}
@@ -352,20 +397,20 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
                   className="flex-1 min-w-[140px] py-3.5 bg-loom-wood text-white hover:bg-loom-wood-light font-heading font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-md transition-all hover:scale-[1.01] cursor-pointer"
                 >
                   <Copy className="w-4 h-4" />
-                  {t('schemes.copyClipboard', 'क्लिपबोर्ड पर कॉपी करें')}
+                  {isEn ? "Copy to Clipboard" : t('schemes.copyClipboard', 'क्लिपबोर्ड पर कॉपी करें')}
                 </button>
                 <button
                   onClick={handlePrint}
                   className="flex-1 min-w-[140px] py-3.5 bg-white border border-loom-wood text-loom-wood hover:bg-loom-cream font-heading font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all hover:scale-[1.01] cursor-pointer"
                 >
                   <Printer className="w-4 h-4" />
-                  {t('schemes.downloadPdf', 'प्रिंट / पीडीएफ')}
+                  {isEn ? "Print / PDF" : t('schemes.downloadPdf', 'प्रिंट / पीडीएफ')}
                 </button>
                 <button
                   onClick={() => setShowSummaryModal(false)}
                   className="w-full sm:w-auto px-6 py-3.5 bg-loom-beige/40 text-loom-wood hover:bg-loom-sand/20 font-heading font-bold text-sm rounded-xl transition-all cursor-pointer text-center"
                 >
-                  {t('schemes.close', 'बंद करें')}
+                  {isEn ? "Close" : t('schemes.close', 'बंद करें')}
                 </button>
               </div>
 
@@ -378,7 +423,9 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
           <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 flex items-center justify-center p-4">
             <div className="bg-loom-cream border-2 border-loom-gold max-w-md w-full rounded-2xl shadow-2xl p-6 relative">
               <div className="flex justify-between items-center border-b border-loom-beige pb-4 mb-4">
-                <h3 className="font-heading text-xl font-bold text-loom-wood">{t('schemes.updateCertifications', 'प्रमाणपत्र अपडेट करें')}</h3>
+                <h3 className="font-heading text-xl font-bold text-loom-wood">
+                  {isEn ? "Update Certifications" : t('schemes.updateCertifications', 'प्रमाणपत्र अपडेट करें')}
+                </h3>
                 <button 
                   onClick={() => setShowCertModal(false)}
                   className="p-1 hover:bg-loom-sand/20 rounded-lg text-loom-wood cursor-pointer"
@@ -393,8 +440,12 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
                   {/* Handloom Mark Toggle */}
                   <label className="flex items-center justify-between p-3.5 bg-white border border-loom-beige rounded-xl cursor-pointer hover:bg-loom-cream/40 transition-colors">
                     <div>
-                      <span className="font-heading font-bold text-loom-wood text-sm block">हैंडलूम मार्क (Handloom Mark)</span>
-                      <span className="text-xs text-loom-ink-light font-medium block mt-0.5">प्रमाणित असली हथकरघा उत्पाद</span>
+                      <span className="font-heading font-bold text-loom-wood text-sm block">
+                        {isEn ? "Handloom Mark" : "हैंडलूम मार्क (Handloom Mark)"}
+                      </span>
+                      <span className="text-xs text-loom-ink-light font-medium block mt-0.5">
+                        {isEn ? "Certified authentic handloom product" : "प्रमाणित असली हथकरघा उत्पाद"}
+                      </span>
                     </div>
                     <div className="relative inline-block w-12 h-6 select-none align-middle shrink-0">
                       <input 
@@ -410,8 +461,12 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
                   {/* Udyam Registration Toggle */}
                   <label className="flex items-center justify-between p-3.5 bg-white border border-loom-beige rounded-xl cursor-pointer hover:bg-loom-cream/40 transition-colors">
                     <div>
-                      <span className="font-heading font-bold text-loom-wood text-sm block">उद्यम पंजीकरण (Udyam Registration)</span>
-                      <span className="text-xs text-loom-ink-light font-medium block mt-0.5">सूक्ष्म, लघु और मध्यम उद्यम पंजीकरण</span>
+                      <span className="font-heading font-bold text-loom-wood text-sm block">
+                        {isEn ? "Udyam Registration" : "उद्यम पंजीकरण (Udyam Registration)"}
+                      </span>
+                      <span className="text-xs text-loom-ink-light font-medium block mt-0.5">
+                        {isEn ? "Micro, Small & Medium Enterprise Registration" : "सूक्ष्म, लघु और मध्यम उद्यम पंजीकरण"}
+                      </span>
                     </div>
                     <div className="relative inline-block w-12 h-6 select-none align-middle shrink-0">
                       <input 
@@ -427,8 +482,12 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
                   {/* GI Tag Toggle */}
                   <label className="flex items-center justify-between p-3.5 bg-white border border-loom-beige rounded-xl cursor-pointer hover:bg-loom-cream/40 transition-colors">
                     <div>
-                      <span className="font-heading font-bold text-loom-wood text-sm block">जीआई टैग (GI Tag)</span>
-                      <span className="text-xs text-loom-ink-light font-medium block mt-0.5">भौगोलिक संकेतक प्रमाणीकरण</span>
+                      <span className="font-heading font-bold text-loom-wood text-sm block">
+                        {isEn ? "GI Tag" : "जीआई टैग (GI Tag)"}
+                      </span>
+                      <span className="text-xs text-loom-ink-light font-medium block mt-0.5">
+                        {isEn ? "Geographical Indication Authentication" : "भौगोलिक संकेतक प्रमाणीकरण"}
+                      </span>
                     </div>
                     <div className="relative inline-block w-12 h-6 select-none align-middle shrink-0">
                       <input 
@@ -449,14 +508,14 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
                     onClick={() => setShowCertModal(false)}
                     className="flex-1 py-3 bg-white border border-loom-beige text-loom-wood rounded-xl hover:bg-loom-cream font-bold text-sm transition-colors cursor-pointer"
                   >
-                    {t('common.cancel', 'रद्द करें')}
+                    {isEn ? "Cancel" : t('common.cancel', 'रद्द करें')}
                   </button>
                   <button
                     type="submit"
                     disabled={savingCerts}
                     className="flex-1 py-3 bg-loom-wood text-white hover:bg-loom-wood-light rounded-xl font-bold text-sm transition-colors cursor-pointer"
                   >
-                    {savingCerts ? 'सहेजा जा रहा है...' : t('common.save', 'सहेजें')}
+                    {savingCerts ? (isEn ? "Saving..." : 'सहेजा जा रहा है...') : (isEn ? "Save" : t('common.save', 'सहेजें'))}
                   </button>
                 </div>
               </form>

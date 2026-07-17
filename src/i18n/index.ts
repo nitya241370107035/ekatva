@@ -17,7 +17,9 @@ i18next
   .use(initReactI18next)
   .init({
     resources,
-    fallbackLng: 'hi', // default to Hindi
+    // Never fall back to Hindi when a user has explicitly selected English.
+    // English is the complete fallback catalogue for keys not yet translated.
+    fallbackLng: 'en',
     interpolation: {
       escapeValue: false, // React already protects against XSS
     },

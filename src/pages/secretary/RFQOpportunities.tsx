@@ -48,8 +48,9 @@ export const RFQOpportunities: React.FC = () => {
   // Selected Coalition details modal for viewing
   const [activeCoalition, setActiveCoalition] = useState<Coalition | null>(null);
 
+  const isEn = i18n.language === 'en';
   const cooperativeId = userProfile?.cooperativeId || 'coop1';
-  const cooperativeName = userProfile?.displayName || t('rfqOpportunities.defaultCoopName', 'काशी हथकरघा सहकारी समिति');
+  const cooperativeName = userProfile?.displayName || (isEn ? 'Kashi Handloom Cooperative' : t('rfqOpportunities.defaultCoopName', 'काशी हथकरघा सहकारी समिति'));
 
   const fetchData = async () => {
     try {
@@ -101,18 +102,18 @@ export const RFQOpportunities: React.FC = () => {
     const price = Number(unitPrice);
 
     if (isNaN(qty) || qty <= 0) {
-      setModalError(t('rfqOpportunities.invalidQty', 'कृपया मान्य मात्रा दर्ज करें (Please enter a valid quantity)'));
+      setModalError(isEn ? 'Please enter a valid quantity.' : t('rfqOpportunities.invalidQty', 'कृपया मान्य मात्रा दर्ज करें (Please enter a valid quantity)'));
       return;
     }
 
     if (isNaN(price) || price <= 0) {
-      setModalError(t('rfqOpportunities.invalidPrice', 'कृपया मान्य मूल्य दर्ज करें (Please enter a valid price)'));
+      setModalError(isEn ? 'Please enter a valid price.' : t('rfqOpportunities.invalidPrice', 'कृपया मान्य मूल्य दर्ज करें (Please enter a valid price)'));
       return;
     }
 
     const availableCapacity = capacities[selectedRFQ.rfqId] || 0;
     if (qty > availableCapacity) {
-      setModalError(t('rfqOpportunities.capacityLimitExceeded', 'क्षमता सीमा पार! आपकी उपलब्ध क्षमता केवल {{capacity}} यूनिट है।', { capacity: availableCapacity }));
+      setModalError(isEn ? `Capacity limit exceeded! Your available capacity is only ${availableCapacity} units.` : t('rfqOpportunities.capacityLimitExceeded', 'क्षमता सीमा पार! आपकी उपलब्ध क्षमता केवल {{capacity}} यूनिट है।', { capacity: availableCapacity }));
       return;
     }
 
@@ -134,21 +135,21 @@ export const RFQOpportunities: React.FC = () => {
       fetchData();
     } catch (err) {
       console.error("Error joining coalition:", err);
-      setModalError(t('rfqOpportunities.joinFailed', 'गठबंधन में शामिल होने में विफल। कृपया पुनः प्रयास करें।'));
+      setModalError(isEn ? 'Failed to join coalition. Please try again.' : t('rfqOpportunities.joinFailed', 'गठबंधन में शामिल होने में विफल। कृपया पुनः प्रयास करें।'));
     } finally {
       setSubmittingQuota(false);
     }
   };
 
   const handleSubmitQuote = async (coalitionId: string) => {
-    if (window.confirm(t('rfqOpportunities.confirmQuoteSubmit', 'क्या आप खरीदार को यह एकीकृत कोटेशन भेजना चाहते हैं? (Send quotation to buyer?)'))) {
+    if (window.confirm(isEn ? 'Are you sure you want to submit this consolidated quotation to the buyer?' : t('rfqOpportunities.confirmQuoteSubmit', 'क्या आप खरीदार को यह एकीकृत कोटेशन भेजना चाहते हैं? (Send quotation to buyer?)'))) {
       try {
         await submitCoalitionQuote(coalitionId);
-        alert(t('rfqOpportunities.quoteSubmitSuccess', 'कोटेशन खरीदार को सफलतापूर्वक भेज दिया गया है!'));
+        alert(isEn ? 'Quotation submitted successfully to the buyer!' : t('rfqOpportunities.quoteSubmitSuccess', 'कोटेशन खरीदार को सफलतापूर्वक भेज दिया गया है!'));
         fetchData();
       } catch (err) {
         console.error("Error submitting quote:", err);
-        alert(t('rfqOpportunities.quoteSubmitError', 'कोटेशन भेजने में असमर्थ।'));
+        alert(isEn ? 'Failed to submit quotation.' : t('rfqOpportunities.quoteSubmitError', 'कोटेशन भेजने में असमर्थ।'));
       }
     }
   };
@@ -183,24 +184,32 @@ export const RFQOpportunities: React.FC = () => {
       <div className="mb-8">
         <h1 className="font-heading text-3xl md:text-4xl font-bold text-loom-wood flex items-center gap-2">
           <Sparkles className="w-8 h-8 text-loom-gold animate-pulse" />
-          {t('rfqOpportunities.title', 'बाज़ार के अवसर एवं गठबंधन इंजन (Coalition & RFQ Board)')}
+          {isEn ? "Market Opportunities & Coalition Engine" : t('rfqOpportunities.title', 'बाज़ार के अवसर एवं गठबंधन इंजन (Coalition & RFQ Board)')}
         </h1>
         <p className="font-body text-base text-loom-ink-light mt-1">
-          {t('rfqOpportunities.subtitle', 'थोक खरीदारों (RFQs) से जुड़े और मांग पूरा करने के लिए अन्य हथकरघा सहकारी समितियों के साथ मिलकर गठबंधन बनाएं।')}
+          {isEn 
+            ? "Connect with bulk buyers (RFQs) and form coalitions with other handloom cooperatives to fulfill high-volume demands."
+            : t('rfqOpportunities.subtitle', 'थोक खरीदारों (RFQs) से जुड़े और मांग पूरा करने के लिए अन्य हथकरघा सहकारी समितियों के साथ मिलकर गठबंधन बनाएं।')}
         </p>
       </div>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <div className="w-12 h-12 border-4 border-loom-gold border-t-transparent rounded-full animate-spin" />
-          <p className="font-heading text-lg text-loom-wood">{t('rfqOpportunities.loading', 'बाज़ार के अवसर लोड हो रहे हैं...')}</p>
+          <p className="font-heading text-lg text-loom-wood">
+            {isEn ? "Loading market opportunities..." : t('rfqOpportunities.loading', 'बाज़ार के अवसर लोड हो रहे हैं...')}
+          </p>
         </div>
       ) : rfqs.length === 0 ? (
         <div className="text-center py-16 bg-white/60 rounded-2xl border-2 border-dashed border-loom-beige p-8">
           <FileText className="w-16 h-16 text-loom-gold/50 mx-auto mb-4" />
-          <h3 className="font-heading text-2xl font-bold text-loom-wood mb-2">{t('rfqOpportunities.noRfqsTitle', 'कोई सक्रिय आरएफक्यू (RFQ) नहीं है')}</h3>
+          <h3 className="font-heading text-2xl font-bold text-loom-wood mb-2">
+            {isEn ? "No active RFQs available" : t('rfqOpportunities.noRfqsTitle', 'कोई सक्रिय आरएफक्यू (RFQ) नहीं है')}
+          </h3>
           <p className="font-body text-loom-ink-light max-w-md mx-auto">
-            {t('rfqOpportunities.noRfqsDesc', 'वर्तमान में बाज़ार में कोई सक्रिय थोक मांग उपलब्ध नहीं है। खरीदार द्वारा आरएफक्यू जमा करते ही यहाँ प्रदर्शित होगा।')}
+            {isEn 
+              ? "There are currently no active bulk demands in the market. Newly submitted buyer RFQs will appear here."
+              : t('rfqOpportunities.noRfqsDesc', 'वर्तमान में बाज़ार में कोई सक्रिय थोक मांग उपलब्ध नहीं है। खरीदार द्वारा आरएफक्यू जमा करते ही यहाँ प्रदर्शित होगा।')}
           </p>
         </div>
       ) : (
@@ -223,7 +232,7 @@ export const RFQOpportunities: React.FC = () => {
               >
                 {/* Red Wax Seal for open high-value / urgent RFQs */}
                 {rfq.status === 'open' && (
-                  <div className="absolute -top-3 -right-3 w-16 h-16 bg-red-700 rounded-full border-4 border-amber-500 flex items-center justify-center shadow-lg rotate-12" title={t('rfqOpportunities.openDemandTooltip', 'खुला और सक्रिय मांग')}>
+                  <div className="absolute -top-3 -right-3 w-16 h-16 bg-red-700 rounded-full border-4 border-amber-500 flex items-center justify-center shadow-lg rotate-12" title={isEn ? "Open and active demand" : t('rfqOpportunities.openDemandTooltip', 'खुला और सक्रिय मांग')}>
                     <span className="text-[9px] font-bold text-white tracking-widest text-center leading-none uppercase">EKATVA<br />SEAL</span>
                   </div>
                 )}
@@ -233,10 +242,12 @@ export const RFQOpportunities: React.FC = () => {
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <span className="text-xs font-bold text-loom-gold uppercase tracking-wider bg-loom-wood px-2.5 py-1 rounded-full border border-loom-gold">
-                        {t('rfqOpportunities.buyerLabel', 'मागकर्ता: {{name}}', { name: rfq.buyerName })}
+                        {isEn ? `Buyer: ${rfq.buyerName}` : t('rfqOpportunities.buyerLabel', 'मागकर्ता: {{name}}', { name: rfq.buyerName })}
                       </span>
                       <h3 className="font-heading text-2xl font-black text-loom-wood mt-2.5 leading-tight">
-                        {t('rfqOpportunities.demandQuantity', '{{quantity}} हस्तनिर्मित वस्त्रों की मांग', { quantity: rfq.requiredQuantity })}
+                        {isEn 
+                          ? `Demand for ${rfq.requiredQuantity} handloom products` 
+                          : t('rfqOpportunities.demandQuantity', '{{quantity}} हस्तनिर्मित वस्त्रों की मांग', { quantity: rfq.requiredQuantity })}
                       </h3>
                     </div>
                   </div>
@@ -250,11 +261,15 @@ export const RFQOpportunities: React.FC = () => {
                     <div className="grid grid-cols-2 gap-4 text-xs pt-1">
                       <div className="flex items-center gap-1.5 text-loom-ink-light">
                         <Clock className="w-4 h-4 text-loom-gold" />
-                        {t('rfqOpportunities.deadlineLabel', 'अंतिम तिथि: {{date}}', { date: new Date(rfq.deadline).toLocaleDateString(i18n.language === 'en' ? 'en-US' : (i18n.language === 'bn' ? 'bn-IN' : 'hi-IN'), { year: 'numeric', month: 'long', day: 'numeric' }) })}
+                        {isEn 
+                          ? `Deadline: ${new Date(rfq.deadline).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`
+                          : t('rfqOpportunities.deadlineLabel', 'अंतिम तिथि: {{date}}', { date: new Date(rfq.deadline).toLocaleDateString(i18n.language === 'en' ? 'en-US' : (i18n.language === 'bn' ? 'bn-IN' : 'hi-IN'), { year: 'numeric', month: 'long', day: 'numeric' }) })}
                       </div>
                       <div className="flex items-center gap-1.5 text-loom-ink-light">
                         <TrendingUp className="w-4 h-4 text-loom-gold" />
-                        {t('rfqOpportunities.budgetLabel', 'बजट सीमा: {{budget}}', { budget: rfq.maxBudgetPerUnit ? `₹${rfq.maxBudgetPerUnit}/${t('rfqOpportunities.pieceUnit', 'पीस')}` : t('rfqOpportunities.negotiable', 'वार्तालाप योग्य') })}
+                        {isEn 
+                          ? `Budget Limit: ${rfq.maxBudgetPerUnit ? `₹${rfq.maxBudgetPerUnit}/pcs` : 'Negotiable'}`
+                          : t('rfqOpportunities.budgetLabel', 'बजट सीमा: {{budget}}', { budget: rfq.maxBudgetPerUnit ? `₹${rfq.maxBudgetPerUnit}/${t('rfqOpportunities.pieceUnit', 'पीस')}` : t('rfqOpportunities.negotiable', 'वार्तालाप योग्य') })}
                       </div>
                     </div>
                   </div>
@@ -263,20 +278,20 @@ export const RFQOpportunities: React.FC = () => {
                   <div className="bg-loom-cream/80 border border-loom-beige rounded-xl p-4 space-y-3 mb-4">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-loom-wood border-b border-loom-beige/60 pb-1.5">
                       <TrendingUp className="w-4 h-4 text-loom-gold" />
-                      {t('rfqOpportunities.coalitionCapabilityAnalysis', 'गठबंधन क्षमता विश्लेषण (Coalition Capability):')}
+                      {isEn ? "Coalition Capacity Analysis:" : t('rfqOpportunities.coalitionCapabilityAnalysis', 'गठबंधन क्षमता विश्लेषण (Coalition Capability):')}
                     </div>
                     
                     <div className="flex justify-between text-xs text-loom-ink-light">
-                      <span>{t('rfqOpportunities.availableCapacity', 'आपकी समिति की उपलब्ध क्षमता:')}</span>
+                      <span>{isEn ? "Your Society's Available Capacity:" : t('rfqOpportunities.availableCapacity', 'आपकी समिति की उपलब्ध क्षमता:')}</span>
                       <span className="font-bold text-loom-wood bg-loom-gold/20 px-2 py-0.5 rounded">
-                        {t('rfqOpportunities.capacityUnits', '{{capacity}} यूनिट्स (दिनांक तक)', { capacity })}
+                        {isEn ? `${capacity} units (by deadline)` : t('rfqOpportunities.capacityUnits', '{{capacity}} यूनिट्स (दिनांक तक)', { capacity })}
                       </span>
                     </div>
 
                     <div className="flex justify-between text-xs text-loom-ink-light">
-                      <span>{t('rfqOpportunities.committedTotal', 'कुल प्रतिबद्ध मात्रा (Allotted so far):')}</span>
+                      <span>{isEn ? "Consolidated Quota (Allocated so far):" : t('rfqOpportunities.committedTotal', 'कुल प्रतिबद्ध मात्रा (Allotted so far):')}</span>
                       <span className="font-bold text-loom-wood">
-                        {t('rfqOpportunities.committedProgress', '{{committed}} / {{required}} पीस', { committed: committedTotal, required: rfq.requiredQuantity })}
+                        {isEn ? `${committedTotal} / ${rfq.requiredQuantity} pcs` : t('rfqOpportunities.committedProgress', '{{committed}} / {{required}} पीस', { committed: committedTotal, required: rfq.requiredQuantity })}
                       </span>
                     </div>
 
@@ -291,16 +306,16 @@ export const RFQOpportunities: React.FC = () => {
                     {/* Participating cooperative names list */}
                     {coalition && coalition.cooperativeQuotas.length > 0 && (
                       <div className="pt-1.5 text-xs space-y-1">
-                        <div className="font-bold text-loom-wood/95">{t('rfqOpportunities.participatingCooperatives', 'सहभागी समितियां:')}</div>
+                        <div className="font-bold text-loom-wood/95">{isEn ? "Participating Cooperatives:" : t('rfqOpportunities.participatingCooperatives', 'सहभागी समितियां:')}</div>
                         <div className="grid grid-cols-1 gap-1">
                           {coalition.cooperativeQuotas.map((q, i) => (
                             <div key={i} className="flex justify-between items-center bg-white/70 px-2.5 py-1 rounded border border-loom-beige text-[11px]">
                               <span className="flex items-center gap-1 font-medium">
                                 <Building className="w-3.5 h-3.5 text-loom-gold" />
-                                {q.cooperativeName} {q.cooperativeId === cooperativeId && `(${t('rfqOpportunities.you', 'आप')})`}
+                                {q.cooperativeName} {q.cooperativeId === cooperativeId && `(${isEn ? "You" : t('rfqOpportunities.you', 'आप')})`}
                               </span>
                               <span className="font-bold text-loom-wood">
-                                {t('rfqOpportunities.piecesCount', '{{count}} पीस', { count: q.allocatedQuantity })} @ ₹{q.unitPrice.toLocaleString(i18n.language === 'en' ? 'en-US' : (i18n.language === 'bn' ? 'bn-IN' : 'hi-IN'))}
+                                {isEn ? `${q.allocatedQuantity} pcs` : t('rfqOpportunities.piecesCount', '{{count}} पीस', { count: q.allocatedQuantity })} @ ₹{q.unitPrice.toLocaleString(isEn ? 'en-US' : (i18n.language === 'bn' ? 'bn-IN' : 'hi-IN'))}
                               </span>
                             </div>
                           ))}
@@ -311,24 +326,25 @@ export const RFQOpportunities: React.FC = () => {
                 </div>
 
                 {/* Footer State & Dynamic Action Buttons */}
-                <div className="pt-4 border-t border-loom-beige/30 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+                <div className="pt-4 border-t border-loom-beige/30 flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3">
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-loom-ink-light uppercase font-bold">{t('rfqOpportunities.statusLabel', 'स्थिति (Status)')}</span>
+                    <span className="text-[10px] text-loom-ink-light uppercase font-bold">{isEn ? "Status" : t('rfqOpportunities.statusLabel', 'स्थिति (Status)')}</span>
                     <span className="text-xs font-bold text-loom-wood flex items-center gap-1">
                       <CheckCircle2 className="w-3.5 h-3.5 text-loom-gold" />
                       {getStatusText(rfq.status)}
                     </span>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 justify-end">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full lg:w-auto lg:flex lg:flex-wrap lg:justify-end">
                     {/* Coalition detail Treaty Document viewer */}
                     {coalition && (
                       <Button
                         type="button"
+                        variant="outline"
                         onClick={() => setActiveCoalition(coalition)}
-                        className="px-4 py-2 bg-loom-beige/20 border border-loom-beige hover:bg-loom-sand/15 text-loom-wood rounded-xl font-heading font-bold text-xs cursor-pointer transition-colors"
+                        className="w-full min-h-11 px-4 py-2 font-heading font-bold text-xs cursor-pointer transition-colors"
                       >
-                        {t('rfqOpportunities.viewTreaty', 'अनुबंध देखें (View Treaty)')}
+                        {isEn ? "View Treaty" : t('rfqOpportunities.viewTreaty', 'अनुबंध देखें (View Treaty)')}
                       </Button>
                     )}
 
@@ -337,15 +353,13 @@ export const RFQOpportunities: React.FC = () => {
                       <Button
                         type="button"
                         onClick={() => handleOpenJoinModal(rfq)}
+                        variant={isParticipating ? "secondary" : "primary"}
                         disabled={capacity <= 0 || remainingNeeded <= 0}
-                        className={`px-4 py-2 rounded-xl font-heading font-bold text-xs shadow-sm cursor-pointer flex items-center gap-1.5 transition-all ${
-                          isParticipating
-                            ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                            : 'bg-loom-wood hover:bg-loom-wood-light text-white'
-                        }`}
+                        title={capacity <= 0 ? (isEn ? "No available capacity for this deadline" : t('rfqOpportunities.noCapacity', 'No available capacity for this deadline')) : remainingNeeded <= 0 ? (isEn ? "This demand has already been fully allocated" : t('rfqOpportunities.demandFilled', 'This demand has already been fully allocated')) : undefined}
+                        className="w-full min-h-11 px-4 py-2 font-heading font-bold text-xs shadow-sm cursor-pointer flex items-center gap-1.5 transition-all"
                       >
                         <Users className="w-4 h-4 text-loom-gold" />
-                        {isParticipating ? t('rfqOpportunities.changeCommitment', 'प्रतिबद्धता बदलें') : t('rfqOpportunities.joinCoalition', 'गठबंधन में जुड़ें (Join)')}
+                        {isParticipating ? (isEn ? "Change Commitment" : t('rfqOpportunities.changeCommitment', 'प्रतिबद्धता बदलें')) : (isEn ? "Join Coalition" : t('rfqOpportunities.joinCoalition', 'गठबंधन में जुड़ें (Join)'))}
                       </Button>
                     )}
 
@@ -353,11 +367,12 @@ export const RFQOpportunities: React.FC = () => {
                     {coalition && coalition.status === 'forming' && coalition.cooperativeQuotas.length > 0 && (
                       <Button
                         type="button"
+                        variant="success"
                         onClick={() => handleSubmitQuote(coalition.coalitionId)}
-                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-heading font-bold text-xs shadow-sm cursor-pointer flex items-center gap-1"
+                        className="w-full min-h-11 px-4 py-2 font-heading font-bold text-xs shadow-sm cursor-pointer flex items-center gap-1"
                       >
                         <Send className="w-3.5 h-3.5" />
-                        {t('rfqOpportunities.submitToBuyer', 'खरीदार को प्रेषित करें')}
+                        {isEn ? "Submit to Buyer" : t('rfqOpportunities.submitToBuyer', 'खरीदार को प्रेषित करें')}
                       </Button>
                     )}
                   </div>
@@ -377,10 +392,12 @@ export const RFQOpportunities: React.FC = () => {
               <div className="relative z-10">
                 <h3 className="font-heading text-xl font-bold flex items-center gap-1.5">
                   <Users className="w-5 h-5 text-loom-gold" />
-                  {t('rfqOpportunities.joinModalTitle', 'सहकारी गठबंधन में शामिल हों')}
+                  {isEn ? "Join Cooperative Coalition" : t('rfqOpportunities.joinModalTitle', 'सहकारी गठबंधन में शामिल हों')}
                 </h3>
                 <p className="text-xs text-loom-gold/90 mt-1">
-                  {t('rfqOpportunities.joinModalSubtitle', 'थोक मांग को सामूहिक रूप से पूरा करने के लिए अपनी उत्पादन मात्राcommitted करें।')}
+                  {isEn 
+                    ? "Commit your production volume to collectively fulfill this bulk demand." 
+                    : t('rfqOpportunities.joinModalSubtitle', 'थोक मांग को सामूहिक रूप से पूरा करने के लिए अपनी उत्पादन मात्राcommitted करें।')}
                 </p>
               </div>
               <button 
@@ -399,20 +416,20 @@ export const RFQOpportunities: React.FC = () => {
               )}
 
               <div className="bg-loom-parchment border border-loom-beige rounded-xl p-3 text-xs space-y-1 text-loom-ink-light">
-                <div className="font-bold text-loom-wood">{t('rfqOpportunities.rfqDetails', 'आरएफक्यू विवरण:')}</div>
+                <div className="font-bold text-loom-wood">{isEn ? "RFQ Details:" : t('rfqOpportunities.rfqDetails', 'आरएफक्यू विवरण:')}</div>
                 <p className="italic">"{selectedRFQ.productDescription}"</p>
                 <div className="flex justify-between font-bold pt-1.5 border-t border-loom-beige/50">
-                  <span>{t('rfqOpportunities.totalQuantityNeeded', 'कुल आवश्यक मात्रा:')}</span>
-                  <span>{t('rfqOpportunities.piecesCount', '{{count}} पीस', { count: selectedRFQ.requiredQuantity })}</span>
+                  <span>{isEn ? "Total Quantity Needed:" : t('rfqOpportunities.totalQuantityNeeded', 'कुल आवश्यक मात्रा:')}</span>
+                  <span>{isEn ? `${selectedRFQ.requiredQuantity} pcs` : t('rfqOpportunities.piecesCount', '{{count}} पीस', { count: selectedRFQ.requiredQuantity })}</span>
                 </div>
                 <div className="flex justify-between font-bold text-emerald-700">
-                  <span>{t('rfqOpportunities.yourAvailableCapacity', 'आपकी उपलब्ध क्षमता:')}</span>
-                  <span>{t('rfqOpportunities.piecesCount', '{{count}} पीस', { count: capacities[selectedRFQ.rfqId] || 0 })}</span>
+                  <span>{isEn ? "Your Available Capacity:" : t('rfqOpportunities.yourAvailableCapacity', 'आपकी उपलब्ध क्षमता:')}</span>
+                  <span>{isEn ? `${capacities[selectedRFQ.rfqId] || 0} pcs` : t('rfqOpportunities.piecesCount', '{{count}} पीस', { count: capacities[selectedRFQ.rfqId] || 0 })}</span>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-loom-wood mb-1">{t('rfqOpportunities.commitQuantityLabel', 'प्रतिबद्ध मात्रा (Quantity you want to commit) *')}</label>
+                <label className="block text-xs font-bold text-loom-wood mb-1">{isEn ? "Committed Quantity *" : t('rfqOpportunities.commitQuantityLabel', 'प्रतिबद्ध मात्रा (Quantity you want to commit) *')}</label>
                 <Input
                   type="number"
                   value={committedQty}
@@ -424,12 +441,12 @@ export const RFQOpportunities: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-loom-wood mb-1">{t('rfqOpportunities.quotedPriceLabel', 'प्रति पीस उद्धृत मूल्य (Unit Price per piece in ₹) *')}</label>
+                <label className="block text-xs font-bold text-loom-wood mb-1">{isEn ? "Quoted Price per Piece (₹) *" : t('rfqOpportunities.quotedPriceLabel', 'प्रति पीस उद्धृत मूल्य (Unit Price per piece in ₹) *')}</label>
                 <Input
                   type="number"
                   value={unitPrice}
                   onChange={(e) => setUnitPrice(e.target.value)}
-                  placeholder={selectedRFQ.maxBudgetPerUnit ? t('rfqOpportunities.unitPricePlaceholder', 'अधिकतम ₹{{max}}', { max: selectedRFQ.maxBudgetPerUnit }) : "उदा. 8500"}
+                  placeholder={selectedRFQ.maxBudgetPerUnit ? (isEn ? `Max ₹${selectedRFQ.maxBudgetPerUnit}` : t('rfqOpportunities.unitPricePlaceholder', 'अधिकतम ₹{{max}}', { max: selectedRFQ.maxBudgetPerUnit })) : "e.g. 8500"}
                   required
                   min="1"
                 />
@@ -438,17 +455,18 @@ export const RFQOpportunities: React.FC = () => {
               <div className="flex justify-end gap-2.5 pt-4 border-t border-loom-beige">
                 <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setSelectedRFQ(null)}
-                  className="px-4 py-2 bg-white border border-loom-beige rounded-xl text-xs font-bold cursor-pointer hover:bg-loom-sand/10"
+                  className="px-4 py-2 font-heading font-bold text-xs cursor-pointer"
                 >
-                  {t('rfqOpportunities.cancel', 'रद्द करें')}
+                  {isEn ? "Cancel" : t('rfqOpportunities.cancel', 'रद्द करें')}
                 </Button>
                 <Button
                   type="submit"
                   disabled={submittingQuota}
                   className="px-5 py-2 bg-loom-wood hover:bg-loom-wood-light text-white rounded-xl text-xs font-bold cursor-pointer disabled:opacity-50"
                 >
-                  {submittingQuota ? t('rfqOpportunities.submitting', 'प्रक्रिया चालू...') : t('rfqOpportunities.signTreaty', 'अनुबंध पर हस्ताक्षर करें')}
+                  {submittingQuota ? (isEn ? "Submitting..." : t('rfqOpportunities.submitting', 'प्रक्रिया चालू...')) : (isEn ? "Sign Treaty Agreement" : t('rfqOpportunities.signTreaty', 'अनुबंध पर हस्ताक्षर करें'))}
                 </Button>
               </div>
             </form>
@@ -474,15 +492,17 @@ export const RFQOpportunities: React.FC = () => {
               <div className="flex flex-col items-center gap-1 pt-2">
                 <ShieldCheck className="w-12 h-12 text-loom-gold" />
                 <h3 className="font-heading text-3xl font-black text-loom-wood uppercase tracking-wide">
-                  {t('rfqOpportunities.treatyTitle', 'सहकारी गठबंधन महा-अनुबंध')}
+                  {isEn ? "Cooperative Coalition Treaty" : t('rfqOpportunities.treatyTitle', 'सहकारी गठबंधन महा-अनुबंध')}
                 </h3>
                 <p className="text-[10px] text-loom-gold uppercase tracking-widest font-bold">
-                  {t('rfqOpportunities.treatySubtitle', 'Ekatva Collective Treaty of Handloom Cooperatives')}
+                  {isEn ? "Ekatva Collective Treaty of Handloom Cooperatives" : t('rfqOpportunities.treatySubtitle', 'Ekatva Collective Treaty of Handloom Cooperatives')}
                 </p>
               </div>
 
               <p className="font-body text-xs text-loom-ink leading-relaxed italic border-y border-loom-beige/60 py-3">
-                {t('rfqOpportunities.treatyPreamble', '"हम, निम्नलिखित हथकरघा सहकारी समितियां, अपनी सामूहिक क्षमता, कौशल और करघों को एकीकृत करते हुए क्रेता की विशिष्ट थोक मांग को पूरा करने के लिए निष्ठापूर्वक इस अनुबंध पर हस्ताक्षर करते हैं।"')}
+                {isEn 
+                  ? '"We, the following handloom cooperatives, hereby consolidate our capacities, skills, and loom resources to collectively fulfill the buyer\'s specified demand in a timely and professional manner."'
+                  : t('rfqOpportunities.treatyPreamble', '"हम, निम्नलिखित हथकरघा सहकारी समितियां, अपनी सामूहिक क्षमता, कौशल और करघों को एकीकृत करते हुए क्रेता की विशिष्ट थोक मांग को पूरा करने के लिए निष्ठापूर्वक इस अनुबंध पर हस्ताक्षर करते हैं।"')}
               </p>
 
               {/* Treaty Table styled as a historical document */}
@@ -490,9 +510,9 @@ export const RFQOpportunities: React.FC = () => {
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
                     <tr className="bg-loom-wood/10 border-b border-loom-beige">
-                      <th className="p-3 font-heading font-bold text-loom-wood">{t('rfqOpportunities.tableCooperative', 'सहकारी समिति')}</th>
-                      <th className="p-3 font-heading font-bold text-loom-wood text-right">{t('rfqOpportunities.tableAllocatedQty', 'आबंटित मात्रा')}</th>
-                      <th className="p-3 font-heading font-bold text-loom-wood text-right">{t('rfqOpportunities.tableUnitPrice', 'दर प्रति पीस')}</th>
+                      <th className="p-3 font-heading font-bold text-loom-wood">{isEn ? "Cooperative" : t('rfqOpportunities.tableCooperative', 'सहकारी समिति')}</th>
+                      <th className="p-3 font-heading font-bold text-loom-wood text-right">{isEn ? "Allocated Qty" : t('rfqOpportunities.tableAllocatedQty', 'आबंटित मात्रा')}</th>
+                      <th className="p-3 font-heading font-bold text-loom-wood text-right">{isEn ? "Unit Price" : t('rfqOpportunities.tableUnitPrice', 'दर प्रति पीस')}</th>
                     </tr>
                   </thead>
                   <tbody className="font-body text-loom-ink font-medium">
@@ -502,22 +522,26 @@ export const RFQOpportunities: React.FC = () => {
                           <Building className="w-3.5 h-3.5 text-loom-gold" />
                           {quota.cooperativeName}
                         </td>
-                        <td className="p-3 text-right font-bold">{t('rfqOpportunities.piecesCount', '{{count}} पीस', { count: quota.allocatedQuantity })}</td>
-                        <td className="p-3 text-right font-bold">₹{quota.unitPrice.toLocaleString(i18n.language === 'en' ? 'en-US' : (i18n.language === 'bn' ? 'bn-IN' : 'hi-IN'))}</td>
+                        <td className="p-3 text-right font-bold">
+                          {isEn ? `${quota.allocatedQuantity} pcs` : t('rfqOpportunities.piecesCount', '{{count}} पीस', { count: quota.allocatedQuantity })}
+                        </td>
+                        <td className="p-3 text-right font-bold">₹{quota.unitPrice.toLocaleString(isEn ? 'en-US' : (i18n.language === 'bn' ? 'bn-IN' : 'hi-IN'))}</td>
                       </tr>
                     ))}
                     <tr className="bg-loom-wood/5 font-bold text-loom-wood">
-                      <td className="p-3">{t('rfqOpportunities.totalQuoteTitle', 'कुल एकीकृत कोटेशन (Total Quote)')}</td>
-                      <td className="p-3 text-right text-sm">{t('rfqOpportunities.piecesCount', '{{count}} पीस', { count: activeCoalition.totalQuantity })}</td>
-                      <td className="p-3 text-right text-sm">₹{activeCoalition.totalQuotePrice.toLocaleString(i18n.language === 'en' ? 'en-US' : (i18n.language === 'bn' ? 'bn-IN' : 'hi-IN'))}</td>
+                      <td className="p-3">{isEn ? "Total Quote" : t('rfqOpportunities.totalQuoteTitle', 'कुल एकीकृत कोटेशन (Total Quote)')}</td>
+                      <td className="p-3 text-right text-sm">
+                        {isEn ? `${activeCoalition.totalQuantity} pcs` : t('rfqOpportunities.piecesCount', '{{count}} पीस', { count: activeCoalition.totalQuantity })}
+                      </td>
+                      <td className="p-3 text-right text-sm">₹{activeCoalition.totalQuotePrice.toLocaleString(isEn ? 'en-US' : (i18n.language === 'bn' ? 'bn-IN' : 'hi-IN'))}</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
 
               <div className="flex justify-between items-center text-[10px] text-loom-ink-light pt-2">
-                <span>{t('rfqOpportunities.treatyCode', 'अनुबंध कूट: {{code}}', { code: activeCoalition.coalitionId })}</span>
-                <span>{t('rfqOpportunities.treatyDate', 'सहमति तिथि: {{date}}', { date: new Date(activeCoalition.createdAt).toLocaleDateString(i18n.language === 'en' ? 'en-US' : (i18n.language === 'bn' ? 'bn-IN' : 'hi-IN')) })}</span>
+                <span>{isEn ? `Treaty Code: ${activeCoalition.coalitionId}` : t('rfqOpportunities.treatyCode', 'अनुबंध कूट: {{code}}', { code: activeCoalition.coalitionId })}</span>
+                <span>{isEn ? `Agreement Date: ${new Date(activeCoalition.createdAt).toLocaleDateString('en-US')}` : t('rfqOpportunities.treatyDate', 'सहमति तिथि: {{date}}', { date: new Date(activeCoalition.createdAt).toLocaleDateString(i18n.language === 'en' ? 'en-US' : (i18n.language === 'bn' ? 'bn-IN' : 'hi-IN')) })}</span>
               </div>
 
               <div className="pt-2 flex justify-center">
@@ -525,7 +549,7 @@ export const RFQOpportunities: React.FC = () => {
                   onClick={() => setActiveCoalition(null)}
                   className="vintage-button px-6 py-2.5 text-xs"
                 >
-                  {t('rfqOpportunities.closeTreaty', 'अनुबंध बंद करें')}
+                  {isEn ? "Close Treaty" : t('rfqOpportunities.closeTreaty', 'अनुबंध बंद करें')}
                 </Button>
               </div>
             </div>

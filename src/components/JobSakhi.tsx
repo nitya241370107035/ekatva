@@ -37,10 +37,23 @@ export const JobSakhi: React.FC = () => {
   } = useVoiceAssistant();
 
   const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [resultMsg, setResultMsg] = useState<string | null>(null);
   const [sakhiTranscript, setSakhiTranscript] = useState<string>('');
   const [attendanceToday, setAttendanceToday] = useState(false);
+
+  // Close peeking trigger when clicking outside
+  useEffect(() => {
+    if (!isExpanded) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('#job-sakhi-trigger')) return;
+      setIsExpanded(false);
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, [isExpanded]);
 
   // Check attendance on mount/open
   useEffect(() => {
@@ -280,15 +293,39 @@ export const JobSakhi: React.FC = () => {
     }, 1000);
   };
 
+  const handleClose = () => {
+    stopListening();
+    setIsOpen(false);
+    setIsExpanded(false);
+  };
+
   return (
     <>
       <button
         id="job-sakhi-trigger"
-        onClick={handleMicClick}
-        className="fixed bottom-6 right-6 z-40 bg-loom-wood hover:bg-loom-wood-light text-white px-4 py-3 rounded-full shadow-2xl flex items-center gap-2 border border-loom-gold hover:scale-105 transition-all duration-300"
+        onClick={(e) => {
+          if (!isExpanded) {
+            e.stopPropagation();
+            setIsExpanded(true);
+          } else {
+            handleMicClick();
+          }
+        }}
+        style={{
+          transform: isExpanded ? 'translateX(-16px)' : 'translateX(28px)',
+          transition: 'transform 350ms cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s, box-shadow 0.2s'
+        }}
+        className="fixed bottom-6 right-0 z-40 h-14 bg-loom-wood hover:bg-loom-wood-light text-white px-4 rounded-l-2xl rounded-r-none shadow-2xl flex items-center justify-center gap-2.5 border-2 border-r-0 border-loom-gold cursor-pointer"
       >
-        <Mic className={`w-6 h-6 ${isListening ? 'animate-bounce' : 'text-loom-gold'}`} />
-        <span className="font-heading font-black text-sm pr-1 hidden sm:inline">
+        <Mic className={`w-6 h-6 shrink-0 ${isListening ? 'animate-bounce text-emerald-400' : 'text-loom-gold'}`} />
+        <span 
+          style={{
+            transition: 'max-width 350ms ease-in-out, opacity 300ms ease-in-out, margin 350ms ease-in-out',
+            maxWidth: isExpanded ? '200px' : '0px',
+            opacity: isExpanded ? 1 : 0,
+          }}
+          className="font-heading font-black text-sm pr-1 overflow-hidden whitespace-nowrap block"
+        >
           {isListening ? `${t('voice.assistantName')} ${t('voice.listening')}` : t('voice.assistantName')}
         </span>
       </button>
@@ -297,7 +334,7 @@ export const JobSakhi: React.FC = () => {
       {isOpen && (
         <div id="job-sakhi-dialog-container" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-fade-in">
           {/* Backdrop Closer */}
-          <div className="absolute inset-0" onClick={() => setIsOpen(false)} />
+          <div className="absolute inset-0" onClick={handleClose} />
 
           <div id="job-sakhi-dialog" className="relative w-full max-w-md bg-loom-cream border-t-8 border-loom-gold rounded-2xl shadow-2xl p-6 z-10 flex flex-col gap-5 border border-loom-beige">
             {/* Header */}
@@ -321,10 +358,7 @@ export const JobSakhi: React.FC = () => {
               </div>
               <button 
                 id="job-sakhi-close"
-                onClick={() => {
-                  stopListening();
-                  setIsOpen(false);
-                }}
+                onClick={handleClose}
                 className="p-1 rounded-lg hover:bg-loom-sand/20 text-loom-wood/60 hover:text-loom-wood transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
@@ -490,10 +524,7 @@ export const JobSakhi: React.FC = () => {
               <button
                 id="job-sakhi-cancel"
                 type="button"
-                onClick={() => {
-                  stopListening();
-                  setIsOpen(false);
-                }}
+                onClick={handleClose}
                 className="px-4 py-2 bg-loom-wood hover:bg-loom-wood-light text-white rounded-xl font-heading font-black text-xs flex items-center gap-1.5 transition-all cursor-pointer"
               >
                 {t('voice.cancel')}

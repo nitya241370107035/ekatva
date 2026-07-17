@@ -7,9 +7,12 @@ import { NoticeCard } from '../../components/NoticeCard';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { ClipboardList, PlusCircle, X, Megaphone, HelpCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export const NoticeBoardPage: React.FC = () => {
   const { userProfile } = useAuth();
+  const { t, i18n } = useTranslation();
+  const isEn = i18n.language === 'en';
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -40,7 +43,7 @@ export const NoticeBoardPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !body.trim()) {
-      setFormError('कृपया सभी फ़ील्ड भरें (Please fill out all fields)');
+      setFormError(isEn ? 'Please fill out all fields' : 'कृपया सभी फ़ील्ड भरें (Please fill out all fields)');
       return;
     }
     
@@ -68,7 +71,7 @@ export const NoticeBoardPage: React.FC = () => {
       await fetchNotices();
     } catch (err) {
       console.error("Error creating notice:", err);
-      setFormError('नोटिस प्रकाशित करने में त्रुटि हुई। कृपया पुनः प्रयास करें।');
+      setFormError(isEn ? 'Error publishing notice. Please try again.' : 'नोटिस प्रकाशित करने में त्रुटि हुई। कृपया पुनः प्रयास करें।');
     } finally {
       setFormSubmitting(false);
     }
@@ -81,10 +84,12 @@ export const NoticeBoardPage: React.FC = () => {
         <div>
           <h1 className="font-heading text-3xl md:text-4xl font-bold text-loom-wood flex items-center gap-2">
             <ClipboardList className="w-8 h-8 text-loom-gold" />
-            डिजिटल सूचना पटल (Cooperative Notice Board)
+            {isEn ? "Digital Notice Board" : "डिजिटल सूचना पटल (Cooperative Notice Board)"}
           </h1>
           <p className="font-body text-base text-loom-ink-light mt-1">
-            समिति बुनकरों के लिए आवश्यक सूचनाएं, दिशा-निर्देश एवं घोषणाएं यहाँ प्रकाशित करें।
+            {isEn 
+              ? "Publish important guidelines, updates, and announcements for weaver members here."
+              : "समिति बुनकरों के लिए आवश्यक सूचनाएं, दिशा-निर्देश एवं घोषणाएं यहाँ प्रकाशित करें।"}
           </p>
         </div>
         <Button
@@ -93,7 +98,7 @@ export const NoticeBoardPage: React.FC = () => {
           className="flex items-center gap-2 px-6 py-3 bg-loom-wood text-white hover:bg-loom-wood-light font-heading font-bold rounded-xl shadow-md transition-all shrink-0 cursor-pointer"
         >
           <PlusCircle className="w-5 h-5" />
-          नई सूचना जोड़ें (Add Notice)
+          {isEn ? "Add Notice" : "नई सूचना जोड़ें (Add Notice)"}
         </Button>
       </div>
 
@@ -101,14 +106,20 @@ export const NoticeBoardPage: React.FC = () => {
       <div className="space-y-6">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <p className="font-heading text-xl text-loom-wood animate-pulse">सूचनाएं लोड हो रही हैं...</p>
+            <p className="font-heading text-xl text-loom-wood animate-pulse">
+              {isEn ? "Loading notices..." : "सूचनाएं लोड हो रही हैं..."}
+            </p>
           </div>
         ) : notices.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center px-4 vintage-card bg-loom-cream">
             <Megaphone className="w-16 h-16 text-loom-beige mb-4" />
-            <h3 className="font-heading text-xl font-bold text-loom-wood">कोई सूचना उपलब्ध नहीं है</h3>
+            <h3 className="font-heading text-xl font-bold text-loom-wood">
+              {isEn ? "No Notices Available" : "कोई सूचना उपलब्ध नहीं है"}
+            </h3>
             <p className="font-body text-base text-loom-ink-light max-w-sm mt-1">
-              अभी तक इस समिति के लिए कोई सूचना पत्र जारी नहीं किया गया है।
+              {isEn 
+                ? "No official notices have been issued by this cooperative yet."
+                : "अभी तक इस समिति के लिए कोई सूचना पत्र जारी नहीं किया गया है।"}
             </p>
           </div>
         ) : (
@@ -133,7 +144,7 @@ export const NoticeBoardPage: React.FC = () => {
             </button>
 
             <h2 className="font-heading text-2xl font-bold text-loom-wood mb-2">
-              नई सहकारी सूचना प्रकाशित करें
+              {isEn ? "Publish New Cooperative Notice" : "नई सहकारी सूचना प्रकाशित करें"}
             </h2>
             <p className="font-body text-sm text-loom-ink-light mb-6 border-b border-loom-beige/30 pb-3">
               (Issue a new official cooperative notification)
@@ -149,11 +160,11 @@ export const NoticeBoardPage: React.FC = () => {
               {/* Title */}
               <div>
                 <label htmlFor="title" className="block text-sm font-bold text-loom-wood mb-1.5 font-heading">
-                  सूचना का शीर्षक (Notification Title) *
+                  {isEn ? "Notification Title *" : "सूचना का शीर्षक (Notification Title) *"}
                 </label>
                 <Input
                   id="title"
-                  placeholder="उदा: सूत वितरण शिविर अथवा सामान्य बैठक"
+                  placeholder={isEn ? "e.g. Yarn Distribution Camp or General Meeting" : "उदा: सूत वितरण शिविर अथवा सामान्य बैठक"}
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full"
@@ -163,7 +174,7 @@ export const NoticeBoardPage: React.FC = () => {
               {/* Priority Selection */}
               <div>
                 <label htmlFor="priority" className="block text-sm font-bold text-loom-wood mb-1.5 font-heading">
-                  सूचना की प्राथमिकता (Priority Level)
+                  {isEn ? "Priority Level" : "सूचना की प्राथमिकता (Priority Level)"}
                 </label>
                 <div className="grid grid-cols-2 gap-4">
                   <button
@@ -175,7 +186,7 @@ export const NoticeBoardPage: React.FC = () => {
                         : 'bg-white text-loom-ink-light border-loom-beige hover:border-loom-gold'
                     }`}
                   >
-                    सामान्य (Normal)
+                    {isEn ? "Normal" : "सामान्य (Normal)"}
                   </button>
                   <button
                     type="button"
@@ -186,7 +197,7 @@ export const NoticeBoardPage: React.FC = () => {
                         : 'bg-white text-loom-ink-light border-loom-beige hover:border-loom-gold'
                     }`}
                   >
-                    आवश्यक / अर्ज़ेंट (Urgent)
+                    {isEn ? "Urgent" : "आवश्यक / अर्ज़ेंट (Urgent)"}
                   </button>
                 </div>
               </div>
@@ -194,12 +205,12 @@ export const NoticeBoardPage: React.FC = () => {
               {/* Notice Body */}
               <div>
                 <label htmlFor="body" className="block text-sm font-bold text-loom-wood mb-1.5 font-heading">
-                  सूचना का विवरण (Description Details) *
+                  {isEn ? "Description Details *" : "सूचना का विवरण (Description Details) *"}
                 </label>
                 <textarea
                   id="body"
                   rows={5}
-                  placeholder="सभी बुनकर भाइयों को सूचित किया जाता है कि..."
+                  placeholder={isEn ? "Dear weavers, this is to notify that..." : "सभी बुनकर भाइयों को सूचित किया जाता है कि..."}
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
                   className="w-full px-4 py-3 bg-white border border-loom-beige rounded-xl focus:outline-none focus:ring-2 focus:ring-loom-gold focus:border-transparent font-body text-base placeholder-loom-beige text-loom-ink shadow-inner resize-none"
@@ -215,14 +226,16 @@ export const NoticeBoardPage: React.FC = () => {
                   disabled={formSubmitting}
                   className="flex-1 font-heading font-bold py-3.5"
                 >
-                  रद्द करें (Cancel)
+                  {isEn ? "Cancel" : "रद्द करें (Cancel)"}
                 </Button>
                 <Button
                   type="submit"
                   disabled={formSubmitting}
                   className="flex-1 font-heading font-bold py-3.5 bg-loom-wood text-white hover:bg-loom-wood-light"
                 >
-                  {formSubmitting ? 'प्रकाशन जारी...' : 'प्रकाशित करें (Publish)'}
+                  {formSubmitting 
+                    ? (isEn ? "Publishing..." : "प्रकाशन जारी...") 
+                    : (isEn ? "Publish" : "प्रकाशित करें (Publish)")}
                 </Button>
               </div>
             </form>

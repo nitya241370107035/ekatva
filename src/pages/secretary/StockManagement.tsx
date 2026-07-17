@@ -10,9 +10,12 @@ import {
 import { RawMaterialStock } from '../../types';
 import { Plus, Edit2, AlertTriangle, RefreshCw, Layers } from 'lucide-react';
 import { Toast } from '../../components/ui/Toast';
+import { useTranslation } from 'react-i18next';
 
 export const StockManagement: React.FC = () => {
   const { userProfile } = useAuth();
+  const { t, i18n } = useTranslation();
+  const isEn = i18n.language === 'en';
   const [stockList, setStockList] = useState<RawMaterialStock[]>([]);
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
@@ -32,6 +35,17 @@ export const StockManagement: React.FC = () => {
   // Form states for Quick Update
   const [qtyChange, setQtyChange] = useState(0);
 
+  const getUnitLabel = (u: string) => {
+    if (!isEn) return u;
+    const map: Record<string, string> = {
+      'किलोग्राम': 'kg',
+      'ग्राम': 'g',
+      'मीटर': 'm',
+      'कोन': 'Cone'
+    };
+    return map[u] || u;
+  };
+
   const fetchStock = async () => {
     if (!userProfile?.cooperativeId) return;
     setLoading(true);
@@ -47,18 +61,18 @@ export const StockManagement: React.FC = () => {
 
   useEffect(() => {
     fetchStock();
-  }, [userProfile?.cooperativeId]);
+  }, [userProfile?.cooperativeId, i18n.language]);
 
   const handleSeedStock = async () => {
     if (!userProfile?.cooperativeId) return;
     setLoading(true);
     try {
       await seedDefaultStock(userProfile.cooperativeId);
-      setToastMessage('प्रारंभिक स्टॉक सफलतापूर्वक जोड़ा गया!');
+      setToastMessage(isEn ? 'Default stock seeded successfully!' : 'प्रारंभिक स्टॉक सफलतापूर्वक जोड़ा गया!');
       await fetchStock();
     } catch (err) {
       console.error(err);
-      setToastMessage('त्रुटि: स्टॉक जोड़ने में विफल।');
+      setToastMessage(isEn ? 'Error: Failed to seed stock.' : 'त्रुटि: स्टॉक जोड़ने में विफल।');
     } finally {
       setLoading(false);
     }
@@ -77,7 +91,7 @@ export const StockManagement: React.FC = () => {
         newUnit,
         Number(newReorderLevel)
       );
-      setToastMessage('सामग्री सफलतापूर्वक स्टॉक में जोड़ी गई!');
+      setToastMessage(isEn ? 'Material added to stock successfully!' : 'सामग्री सफलतापूर्वक स्टॉक में जोड़ी गई!');
       setAddModalOpen(false);
       // Reset form
       setNewMaterialName('');
@@ -87,7 +101,7 @@ export const StockManagement: React.FC = () => {
       await fetchStock();
     } catch (err) {
       console.error(err);
-      setToastMessage('स्टॉक जोड़ने में त्रुटि आई।');
+      setToastMessage(isEn ? 'Error adding stock.' : 'स्टॉक जोड़ने में त्रुटि आई।');
     } finally {
       setFormSubmitting(false);
     }
@@ -104,7 +118,7 @@ export const StockManagement: React.FC = () => {
         selectedStock.stockId,
         qtyChange
       );
-      setToastMessage('स्टॉक मात्रा सफलतापूर्वक अपडेट की गई!');
+      setToastMessage(isEn ? 'Stock quantity updated successfully!' : 'स्टॉक मात्रा सफलतापूर्वक अपडेट की गई!');
       setUpdateModalOpen(false);
       setQtyChange(0);
       setSelectedStock(null);
@@ -128,10 +142,12 @@ export const StockManagement: React.FC = () => {
         <div>
           <h1 className="font-heading text-3xl sm:text-4xl font-bold text-loom-wood flex items-center gap-2">
             <Layers className="w-8 h-8 text-loom-gold shrink-0" />
-            कच्चा माल स्टॉक प्रबंधन (Stock Management)
+            {isEn ? "Raw Material Stock" : "कच्चा माल स्टॉक प्रबंधन (Stock Management)"}
           </h1>
           <p className="font-body text-loom-ink/70 mt-1">
-            समिति के बुनकरों को जारी की जाने वाली सामग्री और स्टॉक स्तर की जानकारी रखें।
+            {isEn 
+              ? "Monitor stock levels of raw materials issued to cooperative weavers."
+              : "समिति के बुनकरों को जारी की जाने वाली सामग्री और स्टॉक स्तर की जानकारी रखें।"}
           </p>
         </div>
 
@@ -142,7 +158,7 @@ export const StockManagement: React.FC = () => {
               className="bg-loom-gold hover:bg-loom-gold-light text-loom-wood px-4 py-2.5 rounded-xl font-heading font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer border border-loom-wood/10 text-sm sm:text-base"
             >
               <RefreshCw className="w-5 h-5 shrink-0" />
-              डेमो स्टॉक सेट करें
+              {isEn ? "Set Demo Stock" : "डेमो स्टॉक सेट करें"}
             </button>
           )}
           <button
@@ -150,7 +166,7 @@ export const StockManagement: React.FC = () => {
             className="vintage-button px-4 py-2.5 text-sm sm:text-base flex items-center gap-2"
           >
             <Plus className="w-5 h-5 shrink-0" />
-            सामग्री जोड़ें
+            {isEn ? "Add Material" : "सामग्री जोड़ें"}
           </button>
         </div>
       </div>
@@ -160,9 +176,13 @@ export const StockManagement: React.FC = () => {
         <div className="mb-6 p-4 bg-orange-50 border-2 border-orange-200 rounded-xl flex items-start gap-3">
           <AlertTriangle className="w-6 h-6 text-orange-600 shrink-0 mt-0.5 animate-pulse" />
           <div>
-            <h4 className="font-heading font-bold text-orange-800 text-lg">निम्न स्टॉक चेतावनी (Low Stock Alert)</h4>
+            <h4 className="font-heading font-bold text-orange-800 text-lg">
+              {isEn ? "Low Stock Alert" : "निम्न स्टॉक चेतावनी (Low Stock Alert)"}
+            </h4>
             <p className="font-body text-orange-700 text-sm">
-              कुछ महत्वपूर्ण सामग्रियां पुन: ऑर्डर स्तर (Reorder Level) से नीचे हैं। कृपया समय पर व्यवस्था करें।
+              {isEn 
+                ? "Some raw materials are below their reorder levels. Please procure them soon."
+                : "कुछ महत्वपूर्ण सामग्रियां पुन: ऑर्डर स्तर (Reorder Level) से नीचे हैं। कृपया समय पर व्यवस्था करें।"}
             </p>
           </div>
         </div>
@@ -173,20 +193,26 @@ export const StockManagement: React.FC = () => {
         {loading ? (
           <div className="py-12 flex flex-col items-center justify-center gap-2">
             <div className="w-10 h-10 border-4 border-loom-gold border-t-transparent rounded-full animate-spin" />
-            <p className="font-heading text-loom-wood mt-2 animate-pulse">स्टॉक डेटा प्राप्त किया जा रहा है...</p>
+            <p className="font-heading text-loom-wood mt-2 animate-pulse">
+              {isEn ? "Fetching stock data..." : "स्टॉक डेटा प्राप्त किया जा रहा है..."}
+            </p>
           </div>
         ) : stockList.length === 0 ? (
           <div className="text-center py-12">
             <span className="text-5xl block mb-3">🧶</span>
-            <h3 className="font-heading text-xl font-bold text-loom-wood">स्टॉक में कोई कच्चा माल नहीं है</h3>
+            <h3 className="font-heading text-xl font-bold text-loom-wood">
+              {isEn ? "No Raw Materials in Stock" : "स्टॉक में कोई कच्चा माल नहीं है"}
+            </h3>
             <p className="font-body text-loom-ink/70 max-w-sm mx-auto mt-2 mb-6">
-              वर्तमान में इस सहकारी समिति का कोई स्टॉक रिकॉर्ड नहीं मिला है। आप नया स्टॉक जोड़ सकते हैं या डेमो स्टॉक सेट कर सकते हैं।
+              {isEn 
+                ? "Currently no raw materials recorded for this cooperative. You can add new stock or seed demo stock."
+                : "वर्तमान में इस सहकारी समिति का कोई स्टॉक रिकॉर्ड नहीं मिला है। आप नया स्टॉक जोड़ सकते हैं या डेमो स्टॉक सेट कर सकते हैं।"}
             </p>
             <button
               onClick={handleSeedStock}
               className="bg-loom-wood hover:bg-loom-wood-light text-loom-cream px-6 py-2.5 rounded-xl font-heading font-bold transition-all shadow-md cursor-pointer text-sm"
             >
-              प्रारंभिक स्टॉक सेट करें
+              {isEn ? "Initialize Stock" : "प्रारंभिक स्टॉक सेट करें"}
             </button>
           </div>
         ) : (
@@ -194,12 +220,12 @@ export const StockManagement: React.FC = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b-2 border-loom-beige bg-loom-sand/20">
-                  <th className="p-4 font-heading font-bold text-loom-wood text-lg">सामग्री (Material Name)</th>
-                  <th className="p-4 font-heading font-bold text-loom-wood text-lg text-right">कुल मात्रा (Total Stock)</th>
-                  <th className="p-4 font-heading font-bold text-loom-wood text-lg">इकाई (Unit)</th>
-                  <th className="p-4 font-heading font-bold text-loom-wood text-lg text-right">पुनः ऑर्डर स्तर (Reorder Level)</th>
-                  <th className="p-4 font-heading font-bold text-loom-wood text-lg text-center">स्थिति (Status)</th>
-                  <th className="p-4 font-heading font-bold text-loom-wood text-lg text-center">कार्यवाही (Actions)</th>
+                  <th className="p-4 font-heading font-bold text-loom-wood text-lg">{isEn ? "Material Name" : "सामग्री (Material Name)"}</th>
+                  <th className="p-4 font-heading font-bold text-loom-wood text-lg text-right">{isEn ? "Total Stock" : "कुल मात्रा (Total Stock)"}</th>
+                  <th className="p-4 font-heading font-bold text-loom-wood text-lg">{isEn ? "Unit" : "इकाई (Unit)"}</th>
+                  <th className="p-4 font-heading font-bold text-loom-wood text-lg text-right">{isEn ? "Reorder Level" : "पुनः ऑर्डर स्तर (Reorder Level)"}</th>
+                  <th className="p-4 font-heading font-bold text-loom-wood text-lg text-center">{isEn ? "Status" : "स्थिति (Status)"}</th>
+                  <th className="p-4 font-heading font-bold text-loom-wood text-lg text-center">{isEn ? "Action" : "कार्यवाही (Actions)"}</th>
                 </tr>
               </thead>
               <tbody>
@@ -219,20 +245,20 @@ export const StockManagement: React.FC = () => {
                         {item.totalQuantity}
                       </td>
                       <td className="p-4 font-body text-loom-ink/80 text-base">
-                        {item.unit}
+                        {getUnitLabel(item.unit)}
                       </td>
                       <td className="p-4 font-body text-right text-base text-loom-ink/70">
-                        {item.reorderLevel} {item.unit}
+                        {item.reorderLevel} {getUnitLabel(item.unit)}
                       </td>
                       <td className="p-4 text-center">
                         {isLow ? (
                           <span className="inline-flex items-center gap-1 bg-orange-100 text-orange-800 text-xs px-2.5 py-1 rounded-full border border-orange-200 font-bold">
                             <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                            कम स्टॉक
+                            {isEn ? "Low Stock" : "कम स्टॉक"}
                           </span>
                         ) : (
                           <span className="inline-flex items-center bg-green-100 text-green-800 text-xs px-2.5 py-1 rounded-full border border-green-200 font-bold">
-                            पर्याप्त
+                            {isEn ? "Sufficient" : "पर्याप्त"}
                           </span>
                         )}
                       </td>
@@ -245,7 +271,7 @@ export const StockManagement: React.FC = () => {
                           className="bg-loom-sand hover:bg-loom-beige text-loom-wood px-3 py-1.5 rounded-lg font-heading text-sm font-semibold transition-all flex items-center gap-1.5 mx-auto cursor-pointer"
                         >
                           <Edit2 className="w-3.5 h-3.5 shrink-0" />
-                          मात्रा बदलें
+                          {isEn ? "Change Qty" : "मात्रा बदलें"}
                         </button>
                       </td>
                     </tr>
@@ -262,18 +288,18 @@ export const StockManagement: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-loom-cream border-4 border-loom-gold rounded-2xl max-w-md w-full shadow-2xl overflow-hidden p-6 relative">
             <h3 className="font-heading text-2xl font-bold text-loom-wood mb-4 pb-2 border-b-2 border-loom-beige">
-              नया कच्चा माल जोड़ें
+              {isEn ? "Add New Raw Material" : "नया कच्चा माल जोड़ें"}
             </h3>
             
             <form onSubmit={handleAddStockSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-heading font-bold text-loom-wood mb-1">
-                  सामग्री का नाम (Material Name) *
+                  {isEn ? "Material Name *" : "सामग्री का नाम (Material Name) *"}
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="जैसे: रेशम धागा, सूती सूत, जरी"
+                  placeholder={isEn ? "e.g. Silk Yarn, Cotton Yarn, Zari" : "जैसे: रेशम धागा, सूती सूत, जरी"}
                   value={newMaterialName}
                   onChange={(e) => setNewMaterialName(e.target.value)}
                   className="w-full px-4 py-2.5 border-2 border-loom-beige rounded-xl focus:border-loom-gold focus:outline-none bg-white text-loom-ink font-body"
@@ -283,7 +309,7 @@ export const StockManagement: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-heading font-bold text-loom-wood mb-1">
-                    मात्रा (Quantity)
+                    {isEn ? "Quantity" : "मात्रा (Quantity)"}
                   </label>
                   <input
                     type="number"
@@ -297,24 +323,24 @@ export const StockManagement: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-heading font-bold text-loom-wood mb-1">
-                    इकाई (Unit)
+                    {isEn ? "Unit" : "इकाई (Unit)"}
                   </label>
                   <select
                     value={newUnit}
                     onChange={(e) => setNewUnit(e.target.value)}
                     className="w-full px-4 py-2.5 border-2 border-loom-beige rounded-xl focus:border-loom-gold focus:outline-none bg-white text-loom-ink font-heading"
                   >
-                    <option value="किलोग्राम">किलोग्राम (kg)</option>
-                    <option value="ग्राम">ग्राम (g)</option>
-                    <option value="मीटर">मीटर (m)</option>
-                    <option value="कोन">कोन (Cone)</option>
+                    <option value="किलोग्राम">{isEn ? "Kilogram (kg)" : "किलोग्राम (kg)"}</option>
+                    <option value="ग्राम">{isEn ? "Gram (g)" : "ग्राम (g)"}</option>
+                    <option value="मीटर">{isEn ? "Meter (m)" : "मीटर (m)"}</option>
+                    <option value="कोन">{isEn ? "Cone" : "कोन (Cone)"}</option>
                   </select>
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-heading font-bold text-loom-wood mb-1">
-                  पुनः ऑर्डर स्तर (Reorder Level)
+                  {isEn ? "Reorder Level" : "पुनः ऑर्डर स्तर (Reorder Level)"}
                 </label>
                 <input
                   type="number"
@@ -326,7 +352,9 @@ export const StockManagement: React.FC = () => {
                   className="w-full px-4 py-2.5 border-2 border-loom-beige rounded-xl focus:border-loom-gold focus:outline-none bg-white text-loom-ink font-body"
                 />
                 <span className="text-xs text-loom-ink/60 mt-1 block">
-                  यदि स्टॉक इस स्तर के बराबर या नीचे जाता है तो कम स्टॉक की चेतावनी दिखाई देगी।
+                  {isEn 
+                    ? "Low stock warning will appear if stock drops to or below this level."
+                    : "यदि स्टॉक इस स्तर के बराबर या नीचे जाता है तो कम स्टॉक की चेतावनी दिखाई देगी।"}
                 </span>
               </div>
 
@@ -336,14 +364,14 @@ export const StockManagement: React.FC = () => {
                   onClick={() => setAddModalOpen(false)}
                   className="px-4 py-2.5 bg-loom-beige/50 hover:bg-loom-beige text-loom-wood rounded-xl font-heading font-semibold transition-all cursor-pointer"
                 >
-                  रद्द करें
+                  {isEn ? "Cancel" : "रद्द करें"}
                 </button>
                 <button
                   type="submit"
                   disabled={formSubmitting}
                   className="vintage-button px-5 py-2.5 text-sm"
                 >
-                  {formSubmitting ? 'जोड़ा जा रहा है...' : 'सुरक्षित करें'}
+                  {formSubmitting ? (isEn ? "Adding..." : "जोड़ा जा रहा है...") : (isEn ? "Save" : "सुरक्षित करें")}
                 </button>
               </div>
             </form>
@@ -356,26 +384,26 @@ export const StockManagement: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-loom-cream border-4 border-loom-gold rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden p-6 relative">
             <h3 className="font-heading text-2xl font-bold text-loom-wood mb-2 pb-2 border-b-2 border-loom-beige">
-              स्टॉक अपडेट करें
+              {isEn ? "Update Stock" : "स्टॉक अपडेट करें"}
             </h3>
             <p className="font-body text-sm text-loom-ink/70 mb-4">
-              <strong>{selectedStock.materialName}</strong> का वर्तमान स्टॉक: <strong>{selectedStock.totalQuantity} {selectedStock.unit}</strong>
+              {isEn ? "Current stock of " : ""}<strong>{selectedStock.materialName}</strong>{isEn ? ": " : " का वर्तमान स्टॉक: "}<strong>{selectedStock.totalQuantity} {getUnitLabel(selectedStock.unit)}</strong>
             </p>
             
             <form onSubmit={handleUpdateStockSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-heading font-bold text-loom-wood mb-1">
-                  जोड़ने/घटाने की मात्रा
+                  {isEn ? "Quantity to Add / Subtract" : "जोड़ने/घटाने की मात्रा"}
                 </label>
                 <input
                   type="number"
                   required
-                  placeholder="उदा: 10 जोड़ने के लिए, -5 घटाने के लिए"
+                  placeholder={isEn ? "e.g. 10 to add, -5 to subtract" : "उदा: 10 जोड़ने के लिए, -5 घटाने के लिए"}
                   onChange={(e) => setQtyChange(Number(e.target.value))}
                   className="w-full px-4 py-2.5 border-2 border-loom-beige rounded-xl focus:border-loom-gold focus:outline-none bg-white text-loom-ink font-body"
                 />
                 <span className="text-xs text-loom-ink/60 mt-1 block">
-                  नया कुल स्टॉक: <strong>{selectedStock.totalQuantity + qtyChange} {selectedStock.unit}</strong>
+                  {isEn ? "New total stock: " : "नया कुल स्टॉक: "}<strong>{selectedStock.totalQuantity + qtyChange} {getUnitLabel(selectedStock.unit)}</strong>
                 </span>
               </div>
 
@@ -389,14 +417,14 @@ export const StockManagement: React.FC = () => {
                   }}
                   className="px-4 py-2.5 bg-loom-beige/50 hover:bg-loom-beige text-loom-wood rounded-xl font-heading font-semibold transition-all cursor-pointer"
                 >
-                  रद्द करें
+                  {isEn ? "Cancel" : "रद्द करें"}
                 </button>
                 <button
                   type="submit"
                   disabled={formSubmitting || (selectedStock.totalQuantity + qtyChange < 0)}
                   className="vintage-button px-5 py-2.5 text-sm"
                 >
-                  {formSubmitting ? 'सुरक्षित हो रहा है...' : 'अपडेट करें'}
+                  {formSubmitting ? (isEn ? "Updating..." : "सुरक्षित हो रहा है...") : (isEn ? "Update" : "अपडेट करें")}
                 </button>
               </div>
             </form>

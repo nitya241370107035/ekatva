@@ -39,14 +39,37 @@
 /* Base style settings for the vintage diary feel */
 body {
   background-color: #FDF5E6; /* loom-parchment */
-  background-image: radial-gradient(#D7B89C 1.5px, transparent 1.5px);
-  background-size: 32px 32px;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(139, 69, 19, 0.10) 1px, transparent 1.25px),
+    linear-gradient(115deg, rgba(255,255,255,0.58), rgba(255,248,240,0.12) 45%, rgba(212,165,116,0.12));
+  background-size: 26px 26px, 100% 100%;
   background-repeat: repeat;
   font-family: "Lora", serif;
   color: #3E2723; /* loom-ink */
   font-size: 1.125rem; /* text-lg / 18px */
   line-height: 1.75;
   -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: #C8A45C;
+  color: #3E2723;
+}
+
+/* Make keyboard navigation visible across every screen. */
+:focus-visible {
+  outline: 3px solid #C8A45C;
+  outline-offset: 3px;
+}
+
+/* Respect operating-system motion preferences. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Typography styles */
@@ -65,13 +88,22 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Custom styles for handloom elements */
 .vintage-card {
-  border-top: 4px solid #C8A45C !important; /* loom-gold */
-  background-color: #FFF8F0; /* loom-cream */
-  border-radius: 0.75rem;
-  border-left: 1px solid #D7B89C;
-  border-right: 1px solid #D7B89C;
-  border-bottom: 2px solid #C4A484;
-  box-shadow: 0 8px 24px -6px rgba(139, 69, 19, 0.12), 0 4px 12px -2px rgba(139, 69, 19, 0.05);
+  border-top: 4px solid #C8A45C !important;
+  background: linear-gradient(145deg, rgba(255, 253, 248, 0.98), rgba(255, 248, 240, 0.94));
+  border-radius: 1rem;
+  border-left: 1px solid #E4C9B2;
+  border-right: 1px solid #E4C9B2;
+  border-bottom: 3px solid #C4A484;
+  box-shadow: 0 14px 32px -14px rgba(91, 45, 12, 0.32), 0 3px 10px rgba(91, 45, 12, 0.06), inset 0 1px rgba(255,255,255,0.9);
+}
+
+.vintage-card::after {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border: 1px solid rgba(200, 164, 92, 0.18);
+  border-radius: 0.7rem;
+  pointer-events: none;
 }
 
 .vintage-button {
@@ -88,6 +120,60 @@ h1, h2, h3, h4, h5, h6 {
   background-color: #A0522D; /* loom-wood-light */
   transform: translateY(-1px);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 6px 8px rgba(62, 39, 35, 0.2);
+}
+
+.app-chrome {
+  background: rgba(255, 248, 240, 0.90);
+  border-bottom: 1px solid rgba(200, 164, 92, 0.6);
+  box-shadow: 0 5px 18px rgba(91, 45, 12, 0.10);
+  backdrop-filter: blur(14px);
+}
+
+.app-brand-mark {
+  position: relative;
+}
+
+.app-brand-mark::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -8px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #C8A45C 18%, #8B4513 50%, #C8A45C 82%, transparent);
+}
+
+.app-nav {
+  scrollbar-width: thin;
+  scrollbar-color: #C8A45C transparent;
+}
+
+.app-nav::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(200,164,92,0.75), transparent);
+}
+
+.app-content {
+  animation: content-arrive 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes content-arrive {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.profile-chip {
+  box-shadow: inset 0 1px rgba(255,255,255,0.8), 0 2px 7px rgba(91,45,12,0.08);
+}
+
+@media (max-width: 640px) {
+  body { font-size: 1rem; line-height: 1.6; }
+  .vintage-card { border-radius: 0.875rem; }
 }
 .vintage-button:active {
   transform: translateY(1px);
@@ -329,6 +415,71 @@ h1, h2, h3, h4, h5, h6 {
 @keyframes typing {
 }
 
+/* ==========================================================
+   ✨ PREMIUM TRADITIONAL INDIAN HANDLOOM ART & ZARI STYLING
+   ========================================================== */
+
+/* Traditional Pochampally/Ikat Diamond weave pattern */
+.bg-handloom-weave {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath d='M10 0 L20 10 L10 20 L0 10 Z' fill='none' stroke='%23C8A45C' stroke-width='0.75' stroke-opacity='0.09'/%3E%3Cpath d='M10 4 L16 10 L10 16 L4 10 Z' fill='none' stroke='%238B4513' stroke-width='0.5' stroke-opacity='0.05'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
+/* Banarasi Zari shimmer hovering thread sweep effect */
+@keyframes zari-sweep {
+  0% { background-position: -200% 0%; }
+  100% { background-position: 200% 0%; }
+}
+.zari-shimmer-hover {
+  position: relative;
+}
+.zari-shimmer-hover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, rgba(255, 235, 180, 0.8), #C8A45C, rgba(255, 235, 180, 0.8), transparent);
+  background-size: 200% 100%;
+  transition: opacity 0.3s ease;
+  opacity: 0;
+  z-index: 10;
+}
+.zari-shimmer-hover:hover::before {
+  opacity: 1;
+  animation: zari-sweep 1.8s infinite linear;
+}
+
+/* Traditional Saree Border - Gold Zari Weave */
+.handloom-zari-border {
+  border-top: 5px solid transparent !important;
+  border-image: linear-gradient(90deg, #C8A45C 0%, #D4A574 15%, #E5C185 30%, #C8A45C 50%, #D4A574 70%, #8B4513 85%, #C8A45C 100%) 1;
+}
+
+/* Royal Wax Seal (Lakh Mudra) eligibility stamp look */
+.vintage-wax-seal {
+  background: linear-gradient(135deg, #800000, #4A0000);
+  color: #FFE082 !important;
+  border: 2px double #D4AF37;
+  box-shadow: 0 4px 10px rgba(74, 0, 0, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  font-family: "Rozha One", serif;
+  letter-spacing: 0.05em;
+}
+
+/* Traditional Royal Display Font for Headings */
+.rozha-heading {
+  font-family: "Rozha One", serif;
+  color: #5C2D0C; /* Traditional Teracotta/Clay Accent */
+  letter-spacing: 0.02em;
+}
+
+/* Modern clean Devnagari/Hindi typography body text */
+.mukta-body {
+  font-family: "Mukta", sans-serif;
+}
+
 /* Print styles for Government Scheme Matchmaker */
 @media print {
   body, html {
@@ -396,5 +547,3 @@ h1, h2, h3, h4, h5, h6 {
     padding: 0 !important;
   }
 }
-
-

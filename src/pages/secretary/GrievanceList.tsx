@@ -8,12 +8,15 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '.
 import { Card, CardContent } from '../../components/ui/Card';
 import { MessageSquare, Calendar, ChevronRight, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 type FilterStatus = 'all' | 'open' | 'in_progress' | 'resolved';
 
 export const GrievanceListPage: React.FC = () => {
   const { userProfile } = useAuth();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const isEn = i18n.language === 'en';
   
   const [grievances, setGrievances] = useState<Grievance[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +43,18 @@ export const GrievanceListPage: React.FC = () => {
   });
 
   const getCategoryText = (category: string) => {
+    if (isEn) {
+      switch (category) {
+        case 'payment':
+          return 'Payment Related';
+        case 'raw material':
+          return 'Raw Material Related';
+        case 'other':
+          return 'Other Subjects';
+        default:
+          return category;
+      }
+    }
     switch (category) {
       case 'payment':
         return 'भुगतान संबंधी (Payment)';
@@ -54,7 +69,7 @@ export const GrievanceListPage: React.FC = () => {
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('hi-IN', {
+    return new Date(dateStr).toLocaleDateString(isEn ? 'en-US' : 'hi-IN', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -67,10 +82,12 @@ export const GrievanceListPage: React.FC = () => {
       <div className="mb-8">
         <h1 className="font-heading text-3xl md:text-4xl font-bold text-loom-wood flex items-center gap-2">
           <MessageSquare className="w-8 h-8 text-loom-gold" />
-          शिकायत निवारण पटल (Grievance Desk)
+          {isEn ? "Grievance Redressal Desk" : "शिकायत निवारण पटल (Grievance Desk)"}
         </h1>
         <p className="font-body text-base text-loom-ink-light mt-1">
-          सहकारी बुनकरों द्वारा दर्ज की गई शिकायतों का प्रबंधन एवं संवाद समाधान।
+          {isEn 
+            ? "Manage and resolve issues submitted by cooperative weaver members."
+            : "सहकारी बुनकरों द्वारा दर्ज की गई शिकायतों का प्रबंधन एवं संवाद समाधान।"}
         </p>
       </div>
 
@@ -78,10 +95,10 @@ export const GrievanceListPage: React.FC = () => {
       <div className="flex flex-wrap gap-2.5 mb-6 border-b border-loom-beige/40 pb-3">
         {(
           [
-            { id: 'all', label: 'सभी शिकायतें (All)' },
-            { id: 'open', label: 'खुली शिकायतें (Open)' },
-            { id: 'in_progress', label: 'प्रगति पर (In Progress)' },
-            { id: 'resolved', label: 'हल की गई (Resolved)' }
+            { id: 'all', label: isEn ? 'All Grievances' : 'सभी शिकायतें (All)' },
+            { id: 'open', label: isEn ? 'Open' : 'खुली शिकायतें (Open)' },
+            { id: 'in_progress', label: isEn ? 'In Progress' : 'प्रगति पर (In Progress)' },
+            { id: 'resolved', label: isEn ? 'Resolved' : 'हल की गई (Resolved)' }
           ] as const
         ).map((tab) => {
           const isSelected = activeTab === tab.id;
@@ -106,26 +123,32 @@ export const GrievanceListPage: React.FC = () => {
         <CardContent className="p-0 overflow-x-auto">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <p className="font-heading text-xl text-loom-wood animate-pulse">शिकायतें लोड हो रही हैं...</p>
+              <p className="font-heading text-xl text-loom-wood animate-pulse">
+                {isEn ? "Loading grievances..." : "शिकायतें लोड हो रही हैं..."}
+              </p>
             </div>
           ) : filteredGrievances.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center px-4">
               <MessageSquare className="w-16 h-16 text-loom-beige mb-4" />
-              <h3 className="font-heading text-xl font-bold text-loom-wood">कोई शिकायत नहीं मिली</h3>
+              <h3 className="font-heading text-xl font-bold text-loom-wood">
+                {isEn ? "No Grievances Found" : "कोई शिकायत नहीं मिली"}
+              </h3>
               <p className="font-body text-base text-loom-ink-light max-w-sm mt-1">
-                चयनित श्रेणी के तहत कोई भी बुनकर शिकायत उपलब्ध नहीं है।
+                {isEn 
+                  ? "No weaver grievances are available under the selected category."
+                  : "चयनित श्रेणी के तहत कोई भी बुनकर शिकायत उपलब्ध नहीं है।"}
               </p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>विषय / विवरण (Subject)</TableHead>
-                  <TableHead>बुनकर का नाम (Weaver)</TableHead>
-                  <TableHead>श्रेणी (Category)</TableHead>
-                  <TableHead>स्थिति (Status)</TableHead>
-                  <TableHead>दिनांक (Date)</TableHead>
-                  <TableHead className="text-right">कार्रवाई (Action)</TableHead>
+                  <TableHead>{isEn ? "Subject / Details" : "विषय / विवरण (Subject)"}</TableHead>
+                  <TableHead>{isEn ? "Weaver Name" : "बुनकर का नाम (Weaver)"}</TableHead>
+                  <TableHead>{isEn ? "Category" : "श्रेणी (Category)"}</TableHead>
+                  <TableHead>{isEn ? "Status" : "स्थिति (Status)"}</TableHead>
+                  <TableHead>{isEn ? "Date" : "दिनांक (Date)"}</TableHead>
+                  <TableHead className="text-right">{isEn ? "Action" : "कार्रवाई (Action)"}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -156,7 +179,7 @@ export const GrievanceListPage: React.FC = () => {
                         onClick={() => navigate(`/secretary/grievances/${grievance.grievanceId}`)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-loom-wood text-white hover:bg-loom-wood-light text-xs font-heading font-bold rounded-lg transition-all cursor-pointer shadow-sm"
                       >
-                        चर्चा खोलें (Respond) <ChevronRight className="w-3.5 h-3.5" />
+                        {isEn ? "Respond" : "चर्चा खोलें (Respond)"} <ChevronRight className="w-3.5 h-3.5" />
                       </button>
                     </TableCell>
                   </TableRow>

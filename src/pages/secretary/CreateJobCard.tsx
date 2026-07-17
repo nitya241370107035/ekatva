@@ -11,9 +11,14 @@ import { WeaverProfile, RawMaterialStock, RawMaterialIssued } from '../../types'
 import { ArrowLeft, Plus, Trash2, Calendar, ClipboardList } from 'lucide-react';
 import { Toast } from '../../components/ui/Toast';
 
+import { useTranslation } from 'react-i18next';
+
 export const CreateJobCard: React.FC = () => {
   const { userProfile, currentUser } = useAuth();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const isEn = i18n.language === 'en';
+
   const [loading, setLoading] = useState(false);
   const [weavers, setWeavers] = useState<WeaverProfile[]>([]);
   const [stockList, setStockList] = useState<RawMaterialStock[]>([]);
@@ -33,6 +38,17 @@ export const CreateJobCard: React.FC = () => {
     { materialName: '', quantity: 1, unit: 'किलोग्राम' }
   ]);
 
+  const getUnitLabel = (u: string) => {
+    if (!isEn) return u;
+    const map: Record<string, string> = {
+      'किलोग्राम': 'kg',
+      'ग्राम': 'g',
+      'मीटर': 'm',
+      'कोन': 'Cone'
+    };
+    return map[u] || u;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       if (!userProfile?.cooperativeId) return;
@@ -51,7 +67,7 @@ export const CreateJobCard: React.FC = () => {
       }
     };
     fetchData();
-  }, [userProfile?.cooperativeId]);
+  }, [userProfile?.cooperativeId, i18n.language]);
 
   const handleAddMaterialRow = () => {
     setRawMaterialsIssued([
@@ -103,14 +119,14 @@ export const CreateJobCard: React.FC = () => {
     
     if (!userProfile?.cooperativeId || !currentUser?.uid) return;
     if (!assignedTo) {
-      setErrorMessage('कृपया कार्य के लिए एक बुनकर चुनें।');
+      setErrorMessage(isEn ? 'Please select a weaver for the job.' : 'कृपया कार्य के लिए एक बुनकर चुनें।');
       return;
     }
 
     // Filter out rows with empty material names
     const materialsToIssue = rawMaterialsIssued.filter(row => row.materialName.trim() !== '');
     if (materialsToIssue.length === 0) {
-      setErrorMessage('कृपया कम से कम एक कच्चा माल दर्ज करें।');
+      setErrorMessage(isEn ? 'Please add at least one raw material.' : 'कृपया कम से कम एक कच्चा माल दर्ज करें।');
       return;
     }
 
@@ -118,7 +134,7 @@ export const CreateJobCard: React.FC = () => {
 
     try {
       const selectedWeaver = weavers.find(w => w.weaverId === assignedTo);
-      const assignedToName = selectedWeaver ? selectedWeaver.displayName : 'बुनकर';
+      const assignedToName = selectedWeaver ? selectedWeaver.displayName : (isEn ? 'Weaver' : 'बुनकर');
 
       await createJobCard({
         cooperativeId: userProfile.cooperativeId,
@@ -132,13 +148,13 @@ export const CreateJobCard: React.FC = () => {
         wagePerPiece: Number(wagePerPiece)
       }, currentUser.uid);
 
-      setToastMessage('कार्य कार्ड सफलतापूर्वक बनाया और स्टॉक से काटा गया!');
+      setToastMessage(isEn ? 'Job card created successfully and stock deducted!' : 'कार्य कार्ड सफलतापूर्वक बनाया और स्टॉक से काटा गया!');
       setTimeout(() => {
         navigate('/secretary/production');
       }, 1500);
     } catch (err: any) {
       console.error(err);
-      setErrorMessage(err.message || 'कार्य कार्ड बनाने में विफल। कृपया पुनः प्रयास करें।');
+      setErrorMessage(err.message || (isEn ? 'Failed to create job card. Please try again.' : 'कार्य कार्ड बनाने में विफल। कृपया पुनः प्रयास करें।'));
     } finally {
       setLoading(false);
     }
@@ -157,7 +173,7 @@ export const CreateJobCard: React.FC = () => {
           className="flex items-center gap-1.5 text-loom-wood hover:text-loom-wood-light font-heading font-semibold transition-all cursor-pointer text-base"
         >
           <ArrowLeft className="w-5 h-5" />
-          उत्पादन बोर्ड पर वापस जाएं
+          {isEn ? "Back to Production Board" : "उत्पादन बोर्ड पर वापस जाएं"}
         </button>
       </div>
 
@@ -167,10 +183,12 @@ export const CreateJobCard: React.FC = () => {
             <ClipboardList className="w-8 h-8 text-loom-gold shrink-0" />
             <div>
               <h1 className="font-heading text-2xl sm:text-3xl font-bold text-loom-wood">
-                नया कार्य कार्ड जारी करें (Create Job Card)
+                {isEn ? "Issue New Job Card" : "नया कार्य कार्ड जारी करें (Create Job Card)"}
               </h1>
               <p className="font-body text-loom-ink/70 text-sm mt-0.5">
-                बुनकर को नया कार्य सौंपने और सामग्री जारी करने के लिए विवरण भरें।
+                {isEn 
+                  ? "Fill details to assign a new job to a weaver and issue raw materials."
+                  : "बुनकर को नया कार्य सौंपने और सामग्री जारी करने के लिए विवरण भरें।"}
               </p>
             </div>
           </div>
@@ -188,12 +206,12 @@ export const CreateJobCard: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-heading font-bold text-loom-wood mb-1.5">
-                  शीर्षक (Job Title) *
+                  {isEn ? "Job Title *" : "शीर्षक (Job Title) *"}
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="जैसे: बनारसी साड़ी - डिजाइन #102"
+                  placeholder={isEn ? "e.g. Banarasi Saree - Design #102" : "जैसे: बनारसी साड़ी - डिजाइन #102"}
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full px-4 py-2.5 border-2 border-loom-beige rounded-xl focus:border-loom-gold focus:outline-none bg-white text-loom-ink font-body"
@@ -202,12 +220,12 @@ export const CreateJobCard: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-heading font-bold text-loom-wood mb-1.5">
-                  डिज़ाइन कोड (Design Code) *
+                  {isEn ? "Design Code *" : "डिज़ाइन कोड (Design Code) *"}
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="जैसे: BN-102"
+                  placeholder={isEn ? "e.g. BN-102" : "जैसे: BN-102"}
                   value={designCode}
                   onChange={(e) => setDesignCode(e.target.value)}
                   className="w-full px-4 py-2.5 border-2 border-loom-beige rounded-xl focus:border-loom-gold focus:outline-none bg-white text-loom-ink font-body uppercase"
@@ -219,11 +237,11 @@ export const CreateJobCard: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-heading font-bold text-loom-wood mb-1.5">
-                  बुनकर चुनें (Assign Weaver) *
+                  {isEn ? "Assign Weaver *" : "बुनकर चुनें (Assign Weaver) *"}
                 </label>
                 {weavers.length === 0 ? (
                   <div className="p-3 bg-loom-sand/20 border-2 border-dashed border-loom-beige rounded-xl text-sm font-body text-loom-ink/70">
-                    सहकारी समिति में कोई बुनकर नहीं मिला।
+                    {isEn ? "No weaver members found in this cooperative." : "सहकारी समिति में कोई बुनकर नहीं मिला।"}
                   </div>
                 ) : (
                   <select
@@ -244,7 +262,7 @@ export const CreateJobCard: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-heading font-bold text-loom-wood mb-1.5">
-                    मात्रा (Qty / Pieces) *
+                    {isEn ? "Quantity (Qty / Pieces) *" : "मात्रा (Qty / Pieces) *"}
                   </label>
                   <input
                     type="number"
@@ -257,7 +275,7 @@ export const CreateJobCard: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-heading font-bold text-loom-wood mb-1.5">
-                    मज़दूरी प्रति पीस (₹) *
+                    {isEn ? "Wages per Piece (₹) *" : "मज़दूरी प्रति पीस (₹) *"}
                   </label>
                   <input
                     type="number"
@@ -275,7 +293,7 @@ export const CreateJobCard: React.FC = () => {
             <div>
               <label className="block text-sm font-heading font-bold text-loom-wood mb-1.5 flex items-center gap-1.5">
                 <Calendar className="w-4 h-4 text-loom-gold" />
-                कार्य पूरा करने की अंतिम तिथि (Deadline) *
+                {isEn ? "Completion Deadline *" : "कार्य पूरा करने की अंतिम तिथि (Deadline) *"}
               </label>
               <input
                 type="date"
@@ -290,7 +308,7 @@ export const CreateJobCard: React.FC = () => {
             <div className="border-t-2 border-dashed border-loom-beige pt-6">
               <div className="flex justify-between items-center mb-4">
                 <h4 className="font-heading text-lg font-bold text-loom-wood">
-                  कच्चा माल जारी करें (Issue Raw Materials)
+                  {isEn ? "Issue Raw Materials" : "कच्चा माल जारी करें (Issue Raw Materials)"}
                 </h4>
                 <button
                   type="button"
@@ -298,7 +316,7 @@ export const CreateJobCard: React.FC = () => {
                   className="bg-loom-sand hover:bg-loom-beige text-loom-wood px-3 py-1.5 rounded-lg font-heading text-xs font-bold flex items-center gap-1 cursor-pointer transition-all border border-loom-beige/50"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  और जोड़ें (Add Material)
+                  {isEn ? "Add Material" : "और जोड़ें (Add Material)"}
                 </button>
               </div>
 
@@ -313,13 +331,13 @@ export const CreateJobCard: React.FC = () => {
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
                         <div className="md:col-span-5">
                           <label className="block text-xs font-heading font-bold text-loom-wood mb-1">
-                            सामग्री का नाम (Select Stock Material)
+                            {isEn ? "Select Stock Material" : "सामग्री का नाम (Select Stock Material)"}
                           </label>
                           {stockList.length === 0 ? (
                             <input
                               type="text"
                               required
-                              placeholder="जैसे: रेशम धागा"
+                              placeholder={isEn ? "e.g. Silk Yarn" : "जैसे: रेशम धागा"}
                               value={row.materialName}
                               onChange={(e) => handleMaterialChange(idx, 'materialName', e.target.value)}
                               className="w-full px-3 py-2 border border-loom-beige rounded-lg focus:outline-none focus:border-loom-gold bg-white text-sm text-loom-ink font-body"
@@ -331,10 +349,10 @@ export const CreateJobCard: React.FC = () => {
                               onChange={(e) => handleMaterialChange(idx, 'materialName', e.target.value)}
                               className="w-full px-3 py-2 border border-loom-beige rounded-lg focus:outline-none focus:border-loom-gold bg-white text-sm text-loom-ink font-body"
                             >
-                              <option value="">-- सामग्री चुनें --</option>
+                              <option value="">{isEn ? "-- Select Material --" : "-- सामग्री चुनें --"}</option>
                               {stockList.map(s => (
                                 <option key={s.stockId} value={s.materialName}>
-                                  {s.materialName} ({s.totalQuantity} {s.unit} उपलब्ध)
+                                  {s.materialName} ({s.totalQuantity} {getUnitLabel(s.unit)} {isEn ? "available" : "उपलब्ध"})
                                 </option>
                               ))}
                             </select>
@@ -343,7 +361,7 @@ export const CreateJobCard: React.FC = () => {
 
                         <div className="md:col-span-3">
                           <label className="block text-xs font-heading font-bold text-loom-wood mb-1">
-                            जारी की जाने वाली मात्रा
+                            {isEn ? "Quantity to Issue" : "जारी की जाने वाली मात्रा"}
                           </label>
                           <input
                             type="number"
@@ -358,17 +376,17 @@ export const CreateJobCard: React.FC = () => {
 
                         <div className="md:col-span-3">
                           <label className="block text-xs font-heading font-bold text-loom-wood mb-1">
-                            इकाई (Unit)
+                            {isEn ? "Unit" : "इकाई (Unit)"}
                           </label>
                           <select
                             value={row.unit}
                             onChange={(e) => handleMaterialChange(idx, 'unit', e.target.value)}
                             className="w-full px-3 py-2 border border-loom-beige rounded-lg focus:outline-none focus:border-loom-gold bg-white text-sm text-loom-ink font-heading"
                           >
-                            <option value="किलोग्राम">किलोग्राम (kg)</option>
-                            <option value="ग्राम">ग्राम (g)</option>
-                            <option value="मीटर">मीटर (m)</option>
-                            <option value="कोन">कोन (Cone)</option>
+                            <option value="किलोग्राम">{isEn ? "Kilogram (kg)" : "किलोग्राम (kg)"}</option>
+                            <option value="ग्राम">{isEn ? "Gram (g)" : "ग्राम (g)"}</option>
+                            <option value="मीटर">{isEn ? "Meter (m)" : "मीटर (m)"}</option>
+                            <option value="कोन">{isEn ? "Cone" : "कोन (Cone)"}</option>
                           </select>
                         </div>
 
@@ -378,7 +396,7 @@ export const CreateJobCard: React.FC = () => {
                               type="button"
                               onClick={() => handleRemoveMaterialRow(idx)}
                               className="p-2 text-loom-error hover:bg-red-50 rounded-lg cursor-pointer transition-colors"
-                              title="हटाएं"
+                              title={isEn ? "Delete" : "हटाएं"}
                             >
                               <Trash2 className="w-5 h-5" />
                             </button>
@@ -390,14 +408,18 @@ export const CreateJobCard: React.FC = () => {
                       {check && (
                         <div className="text-xs font-body">
                           {!check.exists ? (
-                            <span className="text-red-600 font-bold">⚠️ यह सामग्री स्टॉक रिकॉर्ड में मौजूद नहीं है!</span>
+                            <span className="text-red-600 font-bold">{isEn ? "⚠️ Material not found in stock records!" : "⚠️ यह सामग्री स्टॉक रिकॉर्ड में मौजूद नहीं है!"}</span>
                           ) : !check.enough ? (
                             <span className="text-red-600 font-bold">
-                              ❌ अपर्याप्त स्टॉक! उपलब्ध मात्रा: {check.available} {row.unit} है, जबकि आपको {row.quantity} {row.unit} की आवश्यकता है।
+                              {isEn 
+                                ? `❌ Insufficient stock! Available: ${check.available} ${getUnitLabel(row.unit)}, required: ${row.quantity} ${getUnitLabel(row.unit)}.`
+                                : `❌ अपर्याप्त स्टॉक! उपलब्ध मात्रा: ${check.available} ${row.unit} है, जबकि आपको ${row.quantity} ${row.unit} की आवश्यकता है।`}
                             </span>
                           ) : (
                             <span className="text-green-700 font-medium">
-                              ✓ स्टॉक में पर्याप्त है (कुल उपलब्ध: {check.available} {row.unit})
+                              {isEn 
+                                ? `✓ Sufficient stock available (Total: ${check.available} ${getUnitLabel(row.unit)})`
+                                : `✓ स्टॉक में पर्याप्त है (कुल उपलब्ध: ${check.available} ${row.unit})`}
                             </span>
                           )}
                         </div>
@@ -415,14 +437,14 @@ export const CreateJobCard: React.FC = () => {
                 onClick={() => navigate('/secretary/production')}
                 className="px-6 py-2.5 bg-loom-beige/40 hover:bg-loom-beige/70 text-loom-wood rounded-xl font-heading font-semibold transition-all cursor-pointer text-base"
               >
-                रद्द करें
+                {isEn ? "Cancel" : "रद्द करें"}
               </button>
               <button
                 type="submit"
                 disabled={loading}
                 className="vintage-button px-8 py-2.5 text-base"
               >
-                {loading ? 'कार्य कार्ड जारी किया जा रहा है...' : 'कार्य कार्ड जारी करें'}
+                {loading ? (isEn ? "Issuing Job Card..." : "कार्य कार्ड जारी किया जा रहा है...") : (isEn ? "Issue Job Card" : "कार्य कार्ड जारी करें")}
               </button>
             </div>
 

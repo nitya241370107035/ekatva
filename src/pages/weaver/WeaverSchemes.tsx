@@ -73,6 +73,30 @@ export const WeaverSchemes: React.FC = () => {
     certifications: coop?.certifications || []
   };
 
+  const getTranslatedSchemeProps = (scheme: GovtScheme) => {
+    const lowercaseName = scheme.name.toLowerCase();
+    let key = '';
+    if (lowercaseName.includes('india handloom brand') || lowercaseName.includes('ihb')) key = 'ihb';
+    else if (lowercaseName.includes('gem') || lowercaseName.includes('marketplace')) key = 'gem';
+    else if (lowercaseName.includes('mudra')) key = 'mudra';
+    else if (lowercaseName.includes('cluster development') || lowercaseName.includes('nhdp')) key = 'nhdp';
+    else if (lowercaseName.includes('vishwakarma') || lowercaseName.includes('pm-mitra')) key = 'pm_vishwakarma';
+    else if (lowercaseName.includes('ayush') || lowercaseName.includes('export')) key = 'ayush';
+
+    if (key) {
+      return {
+        name: t(`schemes.data.${key}.name`, scheme.name),
+        description: t(`schemes.data.${key}.description`, scheme.description),
+        benefits: t(`schemes.data.${key}.benefits`, scheme.benefits)
+      };
+    }
+    return {
+      name: scheme.name,
+      description: scheme.description,
+      benefits: scheme.benefits
+    };
+  };
+
   const handleApplyClick = (scheme: GovtScheme) => {
     setSelectedScheme(scheme);
     setShowSummaryModal(true);
@@ -84,7 +108,9 @@ export const WeaverSchemes: React.FC = () => {
       t(`schemes.certifications.${c}`, c)
     ).join(', ') || 'None';
 
-    return `Our cooperative, ${coop.name}, meets the eligibility criteria for the "${scheme.name}" scheme.
+    const { name: translatedName } = getTranslatedSchemeProps(scheme);
+
+    return `Our cooperative, ${coop.name}, meets the eligibility criteria for the "${translatedName}" scheme.
 
 CREDENTIALS SUMMARY:
 - Cooperative Name: ${coop.name}
@@ -108,11 +134,12 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 app-content">
       {/* Page Title */}
-      <div className="mb-6 p-6 bg-loom-cream border border-loom-beige rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm print:hidden">
-        <div>
-          <h1 className="font-heading text-3xl font-bold text-loom-wood">
+      <div className="mb-6 p-6 bg-loom-cream border border-loom-beige rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm print:hidden bg-handloom-weave relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-[5px] bg-gradient-to-r from-loom-gold via-loom-wood to-loom-gold" />
+        <div className="relative z-10">
+          <h1 className="rozha-heading text-3.5xl md:text-4xl font-bold text-loom-wood">
             {t('schemes.title', 'सरकारी योजनाएं मैचमेकर')}
           </h1>
           <p className="font-body text-base text-loom-ink-light mt-1">
@@ -171,10 +198,11 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
           <div className="space-y-4">
             {schemes.map((scheme) => {
               const checkResult = checkEligibility(cooperativeData, scheme);
+              const { name: translatedName, description: translatedDesc, benefits: translatedBenefits } = getTranslatedSchemeProps(scheme);
               return (
                 <div 
                   key={scheme.schemeId} 
-                  className="vintage-card p-6 bg-loom-cream border-2 border-loom-beige hover:border-loom-gold transition-all duration-300 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6"
+                  className="vintage-card bg-handloom-weave handloom-zari-border zari-shimmer-hover p-6 bg-loom-cream border-2 border-loom-beige hover:border-loom-gold transition-all duration-300 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-xl hover:-translate-y-0.5"
                 >
                   {/* Background Seal Watermark */}
                   <div className="absolute right-[-20px] bottom-[-20px] opacity-5 pointer-events-none select-none">
@@ -183,27 +211,27 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
 
                   <div className="space-y-3 max-w-3xl relative z-10">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="font-heading font-black text-xl text-loom-wood">{scheme.name}</h3>
+                      <h3 className="font-heading font-black text-2xl text-loom-wood rozha-heading">{translatedName}</h3>
                       
                       {/* Eligibility Badge */}
                       {checkResult.eligible ? (
-                        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 text-xs px-3 py-1 rounded-full border border-emerald-300 font-bold font-heading">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span className="inline-flex items-center gap-1.5 bg-emerald-950 text-emerald-300 text-xs px-3.5 py-1.5 rounded-full border-2 border-emerald-500 font-bold font-heading shadow-md select-none">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                           {t('schemes.eligible', 'पात्र')}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 bg-rose-50 text-rose-800 text-xs px-3 py-1 rounded-full border border-rose-300 font-bold font-heading">
-                          <XCircle className="w-3.5 h-3.5" />
+                        <span className="inline-flex items-center gap-1.5 vintage-wax-seal text-xs px-3.5 py-1.5 rounded-full font-bold select-none">
+                          <XCircle className="w-3.5 h-3.5 text-amber-200" />
                           {t('schemes.notEligible', 'अपात्र')}
                         </span>
                       )}
                     </div>
 
-                    <p className="font-body text-base text-loom-ink/90 leading-relaxed">{scheme.description}</p>
+                    <p className="font-body text-base text-loom-ink/90 leading-relaxed">{translatedDesc}</p>
                     
                     <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs font-semibold font-body text-loom-ink-light">
                       <div>
-                        <strong className="text-loom-wood">लाभ (Benefits):</strong> {scheme.benefits}
+                        <strong className="text-loom-wood">{t('schemes.benefitsLabel', 'लाभ:')}</strong> {translatedBenefits}
                       </div>
                     </div>
 
@@ -255,7 +283,7 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
       {/* Summary Pre-filled Modal */}
       {showSummaryModal && selectedScheme && coop && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 flex items-center justify-center p-4 print:p-0 print:static print:bg-transparent">
-          <div className="bg-loom-cream border-2 border-loom-gold max-w-2xl w-full rounded-2xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 relative print:border-none print:shadow-none print:p-0">
+          <div className="bg-loom-cream border-t-8 border-2 border-loom-gold bg-handloom-weave max-w-2xl w-full rounded-2xl shadow-2xl p-6 md:p-8 flex flex-col gap-6 relative print:border-none print:shadow-none print:p-0">
             
             {/* Modal Header */}
             <div className="flex justify-between items-start border-b border-loom-beige pb-4 print:hidden">
@@ -263,7 +291,9 @@ Ekatva Digital Cooperative Verification Code: COOP-${coop.cooperativeId}-VERIFIE
                 <span className="text-[10px] uppercase font-bold tracking-widest text-loom-gold block">
                   {t('schemes.preFilledSummary', 'आवेदन पूर्व-भराव सारांश')}
                 </span>
-                <h2 className="font-heading text-2xl font-black text-loom-wood mt-1">{selectedScheme.name}</h2>
+                <h2 className="font-heading text-2xl font-black text-loom-wood rozha-heading mt-1">
+                  {getTranslatedSchemeProps(selectedScheme).name}
+                </h2>
               </div>
               <button 
                 onClick={() => setShowSummaryModal(false)}

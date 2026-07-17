@@ -8,10 +8,44 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = Number.parseInt(process.env.PORT || '3000', 10) || 3000;
+const isProduction = process.env.NODE_ENV === 'production';
+const MAX_MESSAGES = 20;
+const MAX_MESSAGE_LENGTH = 4_000;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX_REQUESTS = 20;
+const requestCounts = new Map<string, { count: number; resetAt: number }>();
 
-// Middleware for parsing JSON requests
-app.use(express.json());
+app.disable('x-powered-by');
+app.set('trust proxy', 1);
+
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  next();
+});
+
+// Keep AI prompts bounded so an accidental or abusive request cannot exhaust resources.
+app.use(express.json({ limit: '64kb' }));
+
+app.get('/api/health', (_req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+function isRateLimited(ip: string) {
+  const now = Date.now();
+  const current = requestCounts.get(ip);
+
+  if (!current || current.resetAt <= now) {
+    requestCounts.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+
+  current.count += 1;
+  return current.count > RATE_LIMIT_MAX_REQUESTS;
+}
 
 // Initialize Gemini Client
 const apiKey = process.env.GEMINI_API_KEY;
@@ -58,6 +92,26 @@ Avoid technical AI jargon or software lingo. Speak as an experienced handloom el
 app.post('/api/ai/chat', async (req, res) => {
   const { messages, role = 'weaver' } = req.body;
   const clientApiKey = req.headers['x-gemini-api-key'] || process.env.GEMINI_API_KEY;
+  const requestIp = req.ip || 'unknown';
+  const validRoles = new Set(['weaver', 'secretary']);
+  const validMessages = Array.isArray(messages)
+    && messages.length > 0
+    && messages.length <= MAX_MESSAGES
+    && messages.every((message) =>
+      message
+      && (message.role === 'user' || message.role === 'assistant')
+      && typeof message.content === 'string'
+      && message.content.trim().length > 0
+      && message.content.length <= MAX_MESSAGE_LENGTH
+    );
+
+  if (isRateLimited(requestIp)) {
+    return res.status(429).json({ error: 'rate_limited', message: 'Too many requests. Please wait a minute and try again.' });
+  }
+
+  if (!validMessages || !validRoles.has(role)) {
+    return res.status(400).json({ error: 'invalid_request', message: 'Please provide a valid, concise conversation request.' });
+  }
   
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: 'invalid_messages', message: 'कृपया संदेशों की सूची प्रदान करें।' });
@@ -145,7 +199,7 @@ app.post('/api/ai/chat', async (req, res) => {
     res.status(500).json({ 
       error: 'api_error', 
       message: 'एआई सलाहकार से जुड़ने में विफल। कृपया पुनः प्रयास करें।',
-      details: error?.message || String(error)
+      ...(isProduction ? {} : { details: error?.message || String(error) })
     });
   }
 });
@@ -162,7 +216,10 @@ async function setupViteOrStatic() {
   } else {
     console.log("Serving production static assets from dist/...");
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
+    app.use(express.static(distPath, { maxAge: '1h', etag: true }));
+    app.all('/api/*', (_req, res) => {
+      res.status(404).json({ error: 'not_found' });
+    });
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });

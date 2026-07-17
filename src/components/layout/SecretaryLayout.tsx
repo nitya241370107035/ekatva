@@ -182,7 +182,7 @@ export const SecretaryLayout: React.FC<SecretaryLayoutProps> = ({ children }) =>
     <div className="min-h-screen bg-loom-parchment flex flex-col md:flex-row">
       <OfflineBanner />
       {/* Mobile Top Bar */}
-      <header className="md:hidden bg-loom-cream border-b-2 border-loom-beige h-16 px-4 flex justify-between items-center sticky top-0 z-40 shadow-sm">
+      <header className="app-chrome md:hidden h-16 px-4 flex justify-between items-center sticky top-0 z-40">
         <div className="flex items-center gap-2">
           <EkatvaLogo size={36} showText={false} />
           <span className="font-heading text-xl font-bold text-loom-wood">{t('login.appName', 'एकत्व')} ({t('nav.secretaryTitle', 'सचिव')})</span>
@@ -214,7 +214,7 @@ export const SecretaryLayout: React.FC<SecretaryLayoutProps> = ({ children }) =>
       </aside>
 
       {/* Main Content Pane */}
-      <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full overflow-y-auto">
+      <main className="app-content flex-1 p-4 pb-24 sm:p-6 sm:pb-28 md:p-8 md:pb-10 max-w-7xl mx-auto w-full overflow-y-auto">
         {children || <Outlet />}
       </main>
       <EkatvaHumsafar role="secretary" userName={userProfile?.displayName} />

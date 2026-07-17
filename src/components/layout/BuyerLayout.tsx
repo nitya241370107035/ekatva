@@ -27,11 +27,11 @@ export const BuyerLayout: React.FC<BuyerLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-loom-parchment text-loom-ink font-body flex flex-col">
       {/* Top Header Bar */}
-      <header className="bg-loom-cream border-b-2 border-loom-beige shadow-sm sticky top-0 z-40">
+      <header className="app-chrome sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             {/* Logo Section */}
-            <div className="flex items-center gap-3">
+            <div className="app-brand-mark flex items-center gap-3">
               <EkatvaLogo size={48} showText={false} />
               <div className="flex flex-col">
                 <span className="font-heading text-2xl font-bold text-loom-wood">{t('login.appName', 'एकत्व')}</span>
@@ -46,7 +46,7 @@ export const BuyerLayout: React.FC<BuyerLayoutProps> = ({ children }) => {
               <div className="relative">
                 <button 
                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-loom-parchment border border-loom-beige rounded-full hover:bg-loom-sand/10 transition-colors cursor-pointer"
+                  className="profile-chip flex items-center gap-2 px-3 py-1.5 bg-loom-parchment/80 border border-loom-beige rounded-full hover:bg-loom-sand/15 hover:border-loom-gold transition-colors cursor-pointer"
                 >
                   <div className="w-8 h-8 rounded-full bg-loom-wood text-loom-cream flex items-center justify-center font-heading text-sm font-bold">
                     {userProfile?.displayName ? userProfile.displayName.charAt(0) : 'B'}
@@ -78,7 +78,7 @@ export const BuyerLayout: React.FC<BuyerLayoutProps> = ({ children }) => {
         {/* Vintage Tab Navigation Bar */}
         <div className="bg-loom-cream/50 border-t border-loom-beige/40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <nav className="flex gap-4 sm:gap-8 -mb-[1px]">
+            <nav className="app-nav relative flex gap-4 sm:gap-8 -mb-[1px] overflow-x-auto">
               <Link
                 to="/buyer/marketplace"
                 className={`flex items-center gap-2 py-3 px-2 border-b-3 font-heading text-lg font-bold transition-all cursor-pointer ${
@@ -117,7 +117,7 @@ export const BuyerLayout: React.FC<BuyerLayoutProps> = ({ children }) => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="app-content flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {children}
       </main>
 

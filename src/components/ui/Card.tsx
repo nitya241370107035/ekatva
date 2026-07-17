@@ -17,7 +17,7 @@ export const Card: React.FC<CardProps> = ({ children, className = '', id, hovera
       whileHover={prefersReduced || !hoverable ? {} : { y: -4, boxShadow: "0 12px 30px -4px rgba(139, 69, 19, 0.18), 0 6px 16px -2px rgba(139, 69, 19, 0.08)" }}
       whileTap={prefersReduced || !hoverable ? {} : { scale: 0.98 }}
       transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-      className={`vintage-card p-6 shimmer-gold transition-shadow duration-200 ${className}`}
+      className={`relative vintage-card p-5 sm:p-6 shimmer-gold transition-shadow duration-200 ${className}`}
     >
       {children}
     </motion.div>

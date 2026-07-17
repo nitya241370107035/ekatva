@@ -22,10 +22,13 @@ import {
   CreditCard
 } from 'lucide-react';
 import QRCode from 'react-qr-code';
+import { useTranslation } from 'react-i18next';
 
 export const WeaverProfilePage: React.FC = () => {
   const { weaverId } = useParams<{ weaverId: string }>();
   const navigate = useNavigate();
+  const { i18n } = useTranslation();
+  const isEn = i18n.language === 'en';
   const [weaver, setWeaver] = useState<WeaverProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [showBankDetails, setShowBankDetails] = useState(false);
@@ -33,7 +36,10 @@ export const WeaverProfilePage: React.FC = () => {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!weaverId) return;
+      if (!weaverId) {
+        setLoading(false);
+        return;
+      }
       try {
         const data = await getWeaverProfile(weaverId);
         setWeaver(data);
@@ -54,7 +60,9 @@ export const WeaverProfilePage: React.FC = () => {
     return (
       <SecretaryLayout>
         <div className="flex flex-col items-center justify-center py-24 gap-4">
-          <p className="font-heading text-2xl text-loom-wood animate-pulse">प्रोफ़ाइल लोड हो रही है...</p>
+          <p className="font-heading text-2xl text-loom-wood animate-pulse">
+            {isEn ? "Loading Profile..." : "प्रोफ़ाइल लोड हो रही है..."}
+          </p>
         </div>
       </SecretaryLayout>
     );
@@ -65,12 +73,14 @@ export const WeaverProfilePage: React.FC = () => {
       <SecretaryLayout>
         <div className="p-8 text-center vintage-card">
           <X className="w-16 h-16 text-loom-error mx-auto mb-4" />
-          <h2 className="font-heading text-2xl font-bold text-loom-wood">बुनकर प्रोफ़ाइल नहीं मिली</h2>
+          <h2 className="font-heading text-2xl font-bold text-loom-wood">
+            {isEn ? "Weaver Profile Not Found" : "बुनकर प्रोफ़ाइल नहीं मिली"}
+          </h2>
           <button 
             onClick={() => navigate('/secretary/members')} 
             className="mt-4 inline-flex items-center gap-2 font-heading font-bold text-loom-wood underline"
           >
-            <ArrowLeft className="w-4 h-4" /> सदस्य सूची में वापस जाएं
+            <ArrowLeft className="w-4 h-4" /> {isEn ? "Back to Members List" : "सदस्य सूची में वापस जाएं"}
           </button>
         </div>
       </SecretaryLayout>
@@ -85,10 +95,10 @@ export const WeaverProfilePage: React.FC = () => {
           onClick={() => navigate('/secretary/members')}
           className="inline-flex items-center gap-2 text-loom-wood hover:text-loom-gold font-heading font-bold text-base mb-3 transition-colors cursor-pointer"
         >
-          <ArrowLeft className="w-4 h-4" /> सदस्य पंजी में वापस जाएं (Back to Registry)
+          <ArrowLeft className="w-4 h-4" /> {isEn ? "Back to Registry" : "सदस्य पंजी में वापस जाएं (Back to Registry)"}
         </button>
         <h1 className="font-heading text-3xl font-bold text-loom-wood">
-          बुनकर विस्तृत प्रोफ़ाइल (Weaver Detailed Profile)
+          {isEn ? "Weaver Detailed Profile" : "बुनकर विस्तृत प्रोफ़ाइल (Weaver Detailed Profile)"}
         </h1>
       </div>
 
@@ -107,7 +117,7 @@ export const WeaverProfilePage: React.FC = () => {
 
           <h2 className="font-heading text-2xl font-bold text-loom-wood mb-1">{weaver.displayName}</h2>
           <span className="bg-loom-gold/25 text-loom-wood text-xs font-bold font-heading tracking-wider px-3 py-1 rounded-full border border-loom-gold/40 mb-4">
-            🧶 बुनकर सदस्य (Weaver)
+            🧶 {isEn ? "Weaver Member" : "बुनकर सदस्य (Weaver)"}
           </span>
 
           <div className="w-full border-t border-loom-beige/30 pt-4 mt-2 space-y-3.5 text-left font-body text-base">
@@ -117,7 +127,11 @@ export const WeaverProfilePage: React.FC = () => {
             </div>
             <div className="flex items-center gap-2.5 text-loom-ink">
               <Mail className="w-4 h-4 text-loom-gold shrink-0" />
-              <span className="truncate">{weaver.aadharNumber ? `आधार: XXXX-XXXX-${weaver.aadharNumber.substring(8)}` : 'ईमेल: उपलब्ध नहीं'}</span>
+              <span className="truncate">
+                {weaver.aadharNumber 
+                  ? `${isEn ? "Aadhar" : "आधार"}: XXXX-XXXX-${weaver.aadharNumber.substring(8)}` 
+                  : (isEn ? "Email: N/A" : "ईमेल: उपलब्ध नहीं")}
+              </span>
             </div>
           </div>
 
@@ -128,7 +142,7 @@ export const WeaverProfilePage: React.FC = () => {
             className="w-full mt-6 flex items-center justify-center gap-2 py-3 bg-loom-gold text-loom-ink border border-loom-wood font-heading font-bold"
           >
             <IdCard className="w-5 h-5" />
-            डिजिटल परिचय पत्र (Digital ID Card)
+            {isEn ? "Digital ID Card" : "डिजिटल परिचय पत्र (Digital ID Card)"}
           </Button>
         </div>
 
@@ -138,26 +152,40 @@ export const WeaverProfilePage: React.FC = () => {
           <div className="vintage-card p-6 bg-loom-cream border-l-8 border-l-loom-wood shadow-sm">
             <h3 className="font-heading text-xl font-bold text-loom-wood flex items-center gap-2 border-b border-loom-beige/30 pb-3 mb-4">
               <Award className="w-5 h-5 text-loom-gold" />
-              कार्य एवं बुनाई क्षमता (Work & Capacity)
+              {isEn ? "Work & Capacity" : "कार्य एवं बुनाई क्षमता (Work & Capacity)"}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 font-body">
               <div className="p-4 bg-white rounded-xl border border-loom-beige/40">
-                <span className="text-xs text-loom-ink-light font-bold block mb-1">कुल अनुभव (Experience)</span>
-                <span className="font-heading text-2xl font-bold text-loom-wood">{weaver.experience} वर्ष</span>
+                <span className="text-xs text-loom-ink-light font-bold block mb-1">
+                  {isEn ? "Total Experience" : "कुल अनुभव (Experience)"}
+                </span>
+                <span className="font-heading text-2xl font-bold text-loom-wood">
+                  {weaver.experience} {isEn ? "Years" : "वर्ष"}
+                </span>
               </div>
               <div className="p-4 bg-white rounded-xl border border-loom-beige/40">
-                <span className="text-xs text-loom-ink-light font-bold block mb-1">करघों की संख्या (Looms)</span>
-                <span className="font-heading text-2xl font-bold text-loom-wood">{weaver.numberOfLooms} करघे</span>
+                <span className="text-xs text-loom-ink-light font-bold block mb-1">
+                  {isEn ? "Number of Looms" : "करघों की संख्या (Looms)"}
+                </span>
+                <span className="font-heading text-2xl font-bold text-loom-wood">
+                  {weaver.numberOfLooms} {isEn ? "Looms" : "करघे"}
+                </span>
               </div>
               <div className="p-4 bg-white rounded-xl border border-loom-beige/40">
-                <span className="text-xs text-loom-ink-light font-bold block mb-1">दैनिक क्षमता (Daily Capacity)</span>
-                <span className="font-heading text-2xl font-bold text-loom-wood">{weaver.dailyCapacity} थान/दिन</span>
+                <span className="text-xs text-loom-ink-light font-bold block mb-1">
+                  {isEn ? "Daily Capacity" : "दैनिक क्षमता (Daily Capacity)"}
+                </span>
+                <span className="font-heading text-2xl font-bold text-loom-wood">
+                  {weaver.dailyCapacity} {isEn ? "pieces/day" : "थान/दिन"}
+                </span>
               </div>
             </div>
 
             {/* Skill tags */}
             <div className="mt-6">
-              <span className="text-sm font-bold text-loom-ink-light block mb-2 font-heading">बुनाई शैलियाँ (Specializations)</span>
+              <span className="text-sm font-bold text-loom-ink-light block mb-2 font-heading">
+                {isEn ? "Weaving Specializations" : "बुनाई शैलियाँ (Specializations)"}
+              </span>
               <div className="flex flex-wrap gap-2">
                 {weaver.skillTags?.map((tag, idx) => (
                   <span
@@ -175,23 +203,31 @@ export const WeaverProfilePage: React.FC = () => {
           <div className="vintage-card p-6 bg-loom-cream border-l-8 border-l-loom-gold shadow-sm">
             <h3 className="font-heading text-xl font-bold text-loom-wood flex items-center gap-2 border-b border-loom-beige/30 pb-3 mb-4">
               <MapPin className="w-5 h-5 text-loom-gold" />
-              पता विवरणी (Postal Address)
+              {isEn ? "Postal Address" : "पता विवरणी (Postal Address)"}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-body text-base">
               <div>
-                <span className="text-xs text-loom-ink-light font-bold block mb-0.5">ग्राम / गली / वार्ड</span>
+                <span className="text-xs text-loom-ink-light font-bold block mb-0.5">
+                  {isEn ? "Village / Street / Ward" : "ग्राम / गली / वार्ड"}
+                </span>
                 <span className="text-loom-ink font-semibold">{weaver.address?.street}</span>
               </div>
               <div>
-                <span className="text-xs text-loom-ink-light font-bold block mb-0.5">शहर / जिला (City)</span>
+                <span className="text-xs text-loom-ink-light font-bold block mb-0.5">
+                  {isEn ? "City / District" : "शहर / जिला (City)"}
+                </span>
                 <span className="text-loom-ink font-semibold">{weaver.address?.city}</span>
               </div>
               <div className="mt-3">
-                <span className="text-xs text-loom-ink-light font-bold block mb-0.5">राज्य (State)</span>
+                <span className="text-xs text-loom-ink-light font-bold block mb-0.5">
+                  {isEn ? "State" : "राज्य (State)"}
+                </span>
                 <span className="text-loom-ink font-semibold">{weaver.address?.state}</span>
               </div>
               <div className="mt-3">
-                <span className="text-xs text-loom-ink-light font-bold block mb-0.5">पिनकोड (Pincode)</span>
+                <span className="text-xs text-loom-ink-light font-bold block mb-0.5">
+                  {isEn ? "Pincode" : "पिनकोड (Pincode)"}
+                </span>
                 <span className="text-loom-ink font-mono font-bold tracking-wider">{weaver.address?.pincode}</span>
               </div>
             </div>
@@ -202,7 +238,7 @@ export const WeaverProfilePage: React.FC = () => {
             <div className="flex items-center justify-between border-b border-loom-beige/30 pb-3 mb-4">
               <h3 className="font-heading text-xl font-bold text-loom-wood flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-emerald-700" />
-                बैंक विवरण (Bank Credentials)
+                {isEn ? "Bank Credentials" : "बैंक विवरण (Bank Credentials)"}
               </h3>
               <button
                 type="button"
@@ -211,28 +247,28 @@ export const WeaverProfilePage: React.FC = () => {
               >
                 {showBankDetails ? (
                   <>
-                    <EyeOff className="w-4 h-4 text-loom-wood" /> विवरण छिपाएं (Hide)
+                    <EyeOff className="w-4 h-4 text-loom-wood" /> {isEn ? "Hide Details" : "विवरण छिपाएं (Hide)"}
                   </>
                 ) : (
                   <>
-                    <Eye className="w-4 h-4 text-loom-wood" /> विवरण दिखाएं (Show)
+                    <Eye className="w-4 h-4 text-loom-wood" /> {isEn ? "Show Details" : "विवरण दिखाएं (Show)"}
                   </>
                 )}
               </button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-body text-base">
               <div>
-                <span className="text-xs text-loom-ink-light font-bold block mb-0.5">बैंक का नाम (Bank Name)</span>
+                <span className="text-xs text-loom-ink-light font-bold block mb-0.5">{isEn ? "Bank Name" : "बैंक का नाम (Bank Name)"}</span>
                 <span className="text-loom-ink font-semibold">{weaver.bankAccount?.bankName}</span>
               </div>
               <div>
-                <span className="text-xs text-loom-ink-light font-bold block mb-0.5">खाता संख्या (Account Number)</span>
+                <span className="text-xs text-loom-ink-light font-bold block mb-0.5">{isEn ? "Account Number" : "खाता संख्या (Account Number)"}</span>
                 <span className="text-loom-ink font-mono font-bold">
                   {showBankDetails ? weaver.bankAccount?.accountNumber : `XXXX-XXXX-${weaver.bankAccount?.accountNumber?.slice(-4) || 'XXXX'}`}
                 </span>
               </div>
               <div>
-                <span className="text-xs text-loom-ink-light font-bold block mb-0.5">आईएफएससी कोड (IFSC Code)</span>
+                <span className="text-xs text-loom-ink-light font-bold block mb-0.5">{isEn ? "IFSC Code" : "आईएफएससी कोड (IFSC Code)"}</span>
                 <span className="text-loom-ink font-mono font-bold">
                   {showBankDetails ? weaver.bankAccount?.ifsc : weaver.bankAccount?.ifsc?.substring(0, 4) + 'XXXXXXX'}
                 </span>
@@ -255,7 +291,7 @@ export const WeaverProfilePage: React.FC = () => {
             </button>
 
             <h2 className="font-heading text-2xl font-bold text-loom-wood text-center mb-6 print:hidden">
-              बुनकर डिजिटल पहचान पत्र
+              {isEn ? "Weaver Digital ID Card" : "बुनकर डिजिटल पहचान पत्र"}
             </h2>
 
             {/* Printable ID Card Body */}
@@ -263,8 +299,12 @@ export const WeaverProfilePage: React.FC = () => {
               
               {/* Header */}
               <div className="text-center border-b border-loom-gold/40 pb-3 mb-4 print:border-black">
-                <h3 className="font-heading text-xl font-extrabold text-loom-wood uppercase tracking-wide print:text-black">बुनकर सहकारी समिति</h3>
-                <p className="text-[10px] text-loom-gold font-bold tracking-widest print:text-black">एकत्व डिजिटल सहकारी पहचान पत्र</p>
+                <h3 className="font-heading text-xl font-extrabold text-loom-wood uppercase tracking-wide print:text-black">
+                  {isEn ? "Weaver Cooperative Society" : "बुनकर सहकारी समिति"}
+                </h3>
+                <p className="text-[10px] text-loom-gold font-bold tracking-widest print:text-black">
+                  {isEn ? "Ekatva Digital Cooperative ID Card" : "एकत्व डिजिटल सहकारी पहचान पत्र"}
+                </p>
               </div>
 
               {/* Grid content */}
@@ -281,15 +321,15 @@ export const WeaverProfilePage: React.FC = () => {
                 {/* Info List */}
                 <div className="flex-1 space-y-2 text-center sm:text-left text-sm">
                   <div>
-                    <span className="text-[9px] text-loom-ink-light font-bold block uppercase print:text-black">नाम (Name)</span>
+                    <span className="text-[9px] text-loom-ink-light font-bold block uppercase print:text-black">{isEn ? "Name" : "नाम (Name)"}</span>
                     <span className="font-heading text-lg font-black text-loom-wood print:text-black">{weaver.displayName}</span>
                   </div>
                   <div>
-                    <span className="text-[9px] text-loom-ink-light font-bold block uppercase print:text-black">सदस्य संख्या (ID)</span>
+                    <span className="text-[9px] text-loom-ink-light font-bold block uppercase print:text-black">{isEn ? "ID" : "सदस्य संख्या (ID)"}</span>
                     <span className="font-mono text-xs font-semibold">{weaver.weaverId?.substring(0, 12)}</span>
                   </div>
                   <div>
-                    <span className="text-[9px] text-loom-ink-light font-bold block uppercase print:text-black">फ़ोन (Phone)</span>
+                    <span className="text-[9px] text-loom-ink-light font-bold block uppercase print:text-black">{isEn ? "Phone" : "फ़ोन (Phone)"}</span>
                     <span className="font-mono font-bold text-xs">{weaver.phone}</span>
                   </div>
                 </div>
@@ -299,11 +339,11 @@ export const WeaverProfilePage: React.FC = () => {
               <div className="mt-5 pt-3 border-t border-loom-gold/40 flex items-center justify-between gap-4 print:border-black">
                 <div className="space-y-1.5 flex-1">
                   <div>
-                    <span className="text-[8px] text-loom-ink-light font-bold block print:text-black">अनुभव (Experience)</span>
-                    <span className="text-xs font-bold text-loom-wood print:text-black">{weaver.experience} वर्ष</span>
+                    <span className="text-[8px] text-loom-ink-light font-bold block print:text-black">{isEn ? "Experience" : "अनुभव (Experience)"}</span>
+                    <span className="text-xs font-bold text-loom-wood print:text-black">{weaver.experience} {isEn ? "Years" : "वर्ष"}</span>
                   </div>
                   <div>
-                    <span className="text-[8px] text-loom-ink-light font-bold block print:text-black">बुनाई कौशल (Skills)</span>
+                    <span className="text-[8px] text-loom-ink-light font-bold block print:text-black">{isEn ? "Skills" : "बुनाई कौशल (Skills)"}</span>
                     <div className="flex flex-wrap gap-1 mt-0.5">
                       {weaver.skillTags?.slice(0, 3).map((tag, tIdx) => (
                         <span key={tIdx} className="bg-loom-gold/20 text-loom-wood px-1.5 py-0.5 rounded text-[9px] font-heading font-black border border-loom-gold/30 print:border-black print:text-black">
@@ -334,7 +374,7 @@ export const WeaverProfilePage: React.FC = () => {
                 onClick={() => setShowIdCard(false)}
                 className="flex-1 font-heading font-bold"
               >
-                बंद करें (Close)
+                {isEn ? "Close" : "बंद करें (Close)"}
               </Button>
               <Button
                 type="button"
@@ -342,7 +382,7 @@ export const WeaverProfilePage: React.FC = () => {
                 className="flex-1 flex items-center justify-center gap-2 font-heading font-bold bg-loom-wood text-white hover:bg-loom-wood-light"
               >
                 <Printer className="w-5 h-5" />
-                प्रिंट करें (Print)
+                {isEn ? "Print" : "प्रिंट करें (Print)"}
               </Button>
             </div>
 

@@ -7,9 +7,14 @@ import { JobCard } from '../../types';
 import { Plus, Hammer, Eye, FileCheck2, Calendar, ClipboardCheck, Clock } from 'lucide-react';
 import { Toast } from '../../components/ui/Toast';
 
+import { useTranslation } from 'react-i18next';
+
 export const ProductionBoard: React.FC = () => {
   const { userProfile } = useAuth();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const isEn = i18n.language === 'en';
+
   const [jobCards, setJobCards] = useState<JobCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'assigned' | 'in_progress' | 'completed' | 'qc_passed' | 'qc_rejected'>('all');
@@ -30,7 +35,7 @@ export const ProductionBoard: React.FC = () => {
 
   useEffect(() => {
     fetchJobCards();
-  }, [userProfile?.cooperativeId]);
+  }, [userProfile?.cooperativeId, i18n.language]);
 
   const filteredCards = jobCards.filter((card) => {
     if (activeTab === 'all') return true;
@@ -43,34 +48,34 @@ export const ProductionBoard: React.FC = () => {
         return (
           <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full border border-blue-200 font-bold">
             <Clock className="w-3.5 h-3.5" />
-            असाइन
+            {isEn ? "Assigned" : "असाइन"}
           </span>
         );
       case 'in_progress':
         return (
           <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-sm px-3 py-1 rounded-full border border-amber-200 font-bold">
             <Hammer className="w-3.5 h-3.5" />
-            प्रगति पर
+            {isEn ? "In Progress" : "प्रगति पर"}
           </span>
         );
       case 'completed':
         return (
           <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full border border-green-200 font-bold">
             <ClipboardCheck className="w-3.5 h-3.5" />
-            पूर्ण
+            {isEn ? "Completed" : "पूर्ण"}
           </span>
         );
       case 'qc_passed':
         return (
           <span className="inline-flex items-center gap-1 bg-emerald-700 text-white text-sm px-3 py-1 rounded-full border border-emerald-800 font-bold">
             <FileCheck2 className="w-3.5 h-3.5" />
-            QC पास
+            {isEn ? "QC Passed" : "QC पास"}
           </span>
         );
       case 'qc_rejected':
         return (
           <span className="inline-flex items-center gap-1 bg-red-100 text-red-800 text-sm px-3 py-1 rounded-full border border-red-200 font-bold">
-            ❌ QC असफल
+            {isEn ? "QC Failed" : "❌ QC असफल"}
           </span>
         );
       default:
@@ -81,7 +86,7 @@ export const ProductionBoard: React.FC = () => {
   const formatDate = (dateStr: string) => {
     try {
       const d = new Date(dateStr);
-      return d.toLocaleDateString('hi-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+      return d.toLocaleDateString(isEn ? 'en-US' : 'hi-IN', { year: 'numeric', month: 'long', day: 'numeric' });
     } catch {
       return dateStr;
     }

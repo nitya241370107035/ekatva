@@ -117,7 +117,7 @@ export default function App() {
             } 
           />
           <Route 
-            path="/secretary/members/:id" 
+            path="/secretary/members/:weaverId" 
             element={
               <ProtectedRoute allowedRoles={['secretary']}>
                 <WeaverProfilePage />

@@ -8,9 +8,12 @@ import { Input } from '../../components/ui/Input';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table';
 import { Calendar, PlusCircle, X, Users, BookOpen, Users2, FileText, CheckSquare } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export const MeetingsPage: React.FC = () => {
   const { userProfile } = useAuth();
+  const { t, i18n } = useTranslation();
+  const isEn = i18n.language === 'en';
   
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [weavers, setWeavers] = useState<WeaverProfile[]>([]);
@@ -60,7 +63,7 @@ export const MeetingsPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !date || !agenda.trim() || !minutes.trim() || !decisions.trim()) {
-      setError('कृपया सभी आवश्यक फ़ील्ड भरें (Please fill all required fields)');
+      setError(isEn ? 'Please fill all required fields' : 'कृपया सभी आवश्यक फ़ील्ड भरें (Please fill all required fields)');
       return;
     }
 
@@ -103,7 +106,7 @@ export const MeetingsPage: React.FC = () => {
       await loadData();
     } catch (err) {
       console.error("Error adding meeting:", err);
-      setError('बैठक रिकॉर्ड करने में त्रुटि हुई। कृपया दोबारा प्रयास करें।');
+      setError(isEn ? 'Failed to record meeting. Please try again.' : 'बैठक रिकॉर्ड करने में त्रुटि हुई। कृपया दोबारा प्रयास करें।');
     } finally {
       setSubmitting(false);
     }
@@ -111,7 +114,7 @@ export const MeetingsPage: React.FC = () => {
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('hi-IN', {
+    return new Date(dateStr).toLocaleDateString(isEn ? 'en-US' : 'hi-IN', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -125,10 +128,12 @@ export const MeetingsPage: React.FC = () => {
         <div>
           <h1 className="font-heading text-3xl md:text-4xl font-bold text-loom-wood flex items-center gap-2">
             <Calendar className="w-8 h-8 text-loom-gold" />
-            सहकारी बैठकें एवं प्रस्ताव (Meetings & Minutes)
+            {isEn ? "Meetings & Minutes" : "सहकारी बैठकें एवं प्रस्ताव (Meetings & Minutes)"}
           </h1>
           <p className="font-body text-base text-loom-ink-light mt-1">
-            समिति की बैठकों की कार्यवाही, उपस्थित सदस्य एवं प्रस्तावों का डिजिटल रिकॉर्ड।
+            {isEn 
+              ? "Digital records of committee meetings, minutes, attendee lists, and cooperative resolutions."
+              : "समिति की बैठकों की कार्यवाही, उपस्थित सदस्य एवं प्रस्तावों का डिजिटल रिकॉर्ड।"}
           </p>
         </div>
         <Button
@@ -137,7 +142,7 @@ export const MeetingsPage: React.FC = () => {
           className="flex items-center gap-2 px-6 py-3 bg-loom-wood text-white hover:bg-loom-wood-light font-heading font-bold rounded-xl shadow-md transition-all shrink-0 cursor-pointer"
         >
           <PlusCircle className="w-5 h-5" />
-          नई बैठक जोड़ें (Record Meeting)
+          {isEn ? "Record Meeting" : "नई बैठक जोड़ें (Record Meeting)"}
         </Button>
       </div>
 
@@ -146,24 +151,30 @@ export const MeetingsPage: React.FC = () => {
         <CardContent className="p-0 overflow-x-auto">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <p className="font-heading text-xl text-loom-wood animate-pulse">बैठक सूची लोड हो रही है...</p>
+              <p className="font-heading text-xl text-loom-wood animate-pulse">
+                {isEn ? "Loading meetings list..." : "बैठक सूची लोड हो रही है..."}
+              </p>
             </div>
           ) : meetings.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center px-4">
               <Calendar className="w-16 h-16 text-loom-beige mb-4" />
-              <h3 className="font-heading text-xl font-bold text-loom-wood">कोई बैठक दर्ज नहीं है</h3>
+              <h3 className="font-heading text-xl font-bold text-loom-wood">
+                {isEn ? "No Meetings Recorded" : "कोई बैठक दर्ज नहीं है"}
+              </h3>
               <p className="font-body text-base text-loom-ink-light max-w-sm mt-1">
-                अभी तक इस समिति के लिए कोई बैठक रिकॉर्ड नहीं की गई है।
+                {isEn 
+                  ? "No committee meetings have been recorded yet."
+                  : "अभी तक इस समिति के लिए कोई बैठक रिकॉर्ड नहीं की गई है।"}
               </p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>दिनांक (Date)</TableHead>
-                  <TableHead>बैठक का शीर्षक (Meeting Title)</TableHead>
-                  <TableHead>उपस्थित सदस्य (Attendees)</TableHead>
-                  <TableHead className="text-right font-bold">कार्यवाही (Action)</TableHead>
+                  <TableHead>{isEn ? "Date" : "दिनांक (Date)"}</TableHead>
+                  <TableHead>{isEn ? "Meeting Title" : "बैठक का शीर्षक (Meeting Title)"}</TableHead>
+                  <TableHead>{isEn ? "Attendees" : "उपस्थित सदस्य (Attendees)"}</TableHead>
+                  <TableHead className="text-right font-bold">{isEn ? "Action" : "कार्यवाही (Action)"}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -181,7 +192,7 @@ export const MeetingsPage: React.FC = () => {
                     </TableCell>
                     <TableCell className="font-body text-sm font-semibold text-loom-ink-light">
                       <span className="inline-flex items-center gap-1 bg-loom-gold/15 text-loom-wood px-2 py-1 rounded border border-loom-gold/30">
-                        <Users className="w-3.5 h-3.5" /> {meeting.attendees?.length || 0} सदस्य उपस्थित
+                        <Users className="w-3.5 h-3.5" /> {isEn ? `${meeting.attendees?.length || 0} Members Present` : `${meeting.attendees?.length || 0} सदस्य उपस्थित`}
                       </span>
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
@@ -190,7 +201,7 @@ export const MeetingsPage: React.FC = () => {
                         onClick={() => setSelectedMeeting(meeting)}
                         className="inline-flex items-center gap-1 px-3 py-1.5 bg-loom-wood text-white hover:bg-loom-wood-light text-xs font-heading font-bold rounded-lg transition-all cursor-pointer shadow-sm"
                       >
-                        विवरण देखें (View Details)
+                        {isEn ? "View Details" : "विवरण देखें (View Details)"}
                       </button>
                     </TableCell>
                   </TableRow>
@@ -214,7 +225,7 @@ export const MeetingsPage: React.FC = () => {
             </button>
 
             <h2 className="font-heading text-2xl font-bold text-loom-wood mb-1">
-              नई बैठक की कार्यवाही दर्ज करें
+              {isEn ? "Record New Meeting Minutes" : "नई बैठक की कार्यवाही दर्ज करें"}
             </h2>
             <p className="font-body text-xs text-loom-ink-light mb-6 border-b border-loom-beige/30 pb-3">
               (Record minutes and resolutions of cooperative committee meeting)
@@ -231,11 +242,11 @@ export const MeetingsPage: React.FC = () => {
                 {/* Title */}
                 <div>
                   <label htmlFor="m-title" className="block text-sm font-bold text-loom-wood mb-1.5 font-heading">
-                    बैठक का विषय/शीर्षक (Meeting Title) *
+                    {isEn ? "Meeting Title / Subject *" : "बैठक का विषय/शीर्षक (Meeting Title) *"}
                   </label>
                   <Input
                     id="m-title"
-                    placeholder="उदा: वार्षिक आमसभा 2026"
+                    placeholder={isEn ? "e.g. Annual General Body Meeting 2026" : "उदा: वार्षिक आमसभा 2026"}
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                   />
@@ -244,7 +255,7 @@ export const MeetingsPage: React.FC = () => {
                 {/* Date */}
                 <div>
                   <label htmlFor="m-date" className="block text-sm font-bold text-loom-wood mb-1.5 font-heading">
-                    बैठक की तिथि (Meeting Date) *
+                    {isEn ? "Meeting Date *" : "बैठक की तिथि (Meeting Date) *"}
                   </label>
                   <Input
                     id="m-date"
@@ -259,7 +270,7 @@ export const MeetingsPage: React.FC = () => {
               <div>
                 <label className="block text-sm font-bold text-loom-wood mb-2 font-heading flex items-center gap-1.5">
                   <Users2 className="w-4.5 h-4.5 text-loom-gold" />
-                  उपस्थित बुनकर सदस्य (Attendees Checklist)
+                  {isEn ? "Attending Weaver Members *" : "उपस्थित बुनकर सदस्य (Attendees Checklist)"}
                 </label>
                 <div className="border border-loom-beige bg-white rounded-xl p-4 max-h-[140px] overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-2 shadow-inner">
                   {weavers.map((weaver) => {
@@ -284,23 +295,27 @@ export const MeetingsPage: React.FC = () => {
                     );
                   })}
                   {weavers.length === 0 && (
-                    <span className="text-xs text-loom-ink-light col-span-2">कोई बुनकर पंजीकृत नहीं है।</span>
+                    <span className="text-xs text-loom-ink-light col-span-2">
+                      {isEn ? "No weavers registered." : "कोई बुनकर पंजीकृत नहीं है।"}
+                    </span>
                   )}
                 </div>
                 <p className="text-[10px] text-loom-ink-light font-body mt-1.5">
-                  चयनित सदस्य: <span className="font-bold text-loom-wood">{selectedWeaverIds.length} बुनकर</span>
+                  {isEn 
+                    ? `Selected: ${selectedWeaverIds.length} Weavers` 
+                    : `चयनित सदस्य: ${selectedWeaverIds.length} बुनकर`}
                 </p>
               </div>
 
               {/* Agenda */}
               <div>
                 <label htmlFor="agenda" className="block text-sm font-bold text-loom-wood mb-1.5 font-heading">
-                  बैठक का एजेंडा / कार्यसूची (Meeting Agenda) *
+                  {isEn ? "Meeting Agenda *" : "बैठक का एजेंडा / कार्यसूची (Meeting Agenda) *"}
                 </label>
                 <textarea
                   id="agenda"
                   rows={2.5}
-                  placeholder="बैठक में विचार किए जाने वाले मुख्य विषय..."
+                  placeholder={isEn ? "Main topics to be discussed in the meeting..." : "बैठक में विचार किए जाने वाले मुख्य विषय..."}
                   value={agenda}
                   onChange={(e) => setAgenda(e.target.value)}
                   className="w-full px-4 py-3 bg-white border border-loom-beige rounded-xl focus:outline-none focus:ring-2 focus:ring-loom-gold focus:border-transparent font-body text-base placeholder-loom-beige text-loom-ink shadow-inner resize-none"
@@ -310,12 +325,12 @@ export const MeetingsPage: React.FC = () => {
               {/* Minutes of meeting */}
               <div>
                 <label htmlFor="minutes" className="block text-sm font-bold text-loom-wood mb-1.5 font-heading">
-                  बैठक की कार्यवाही / विवरण (Proceedings / Minutes) *
+                  {isEn ? "Proceedings / Minutes Details *" : "बैठक की कार्यवाही / विवरण (Proceedings / Minutes) *"}
                 </label>
                 <textarea
                   id="minutes"
                   rows={3}
-                  placeholder="बैठक में क्या-क्या चर्चा की गई..."
+                  placeholder={isEn ? "Detailed discussion minutes..." : "बैठक में क्या-क्या चर्चा की गई..."}
                   value={minutes}
                   onChange={(e) => setMinutes(e.target.value)}
                   className="w-full px-4 py-3 bg-white border border-loom-beige rounded-xl focus:outline-none focus:ring-2 focus:ring-loom-gold focus:border-transparent font-body text-base placeholder-loom-beige text-loom-ink shadow-inner resize-none"
@@ -325,12 +340,12 @@ export const MeetingsPage: React.FC = () => {
               {/* Resolutions/Decisions */}
               <div>
                 <label htmlFor="decisions" className="block text-sm font-bold text-loom-wood mb-1.5 font-heading">
-                  लिए गए महत्वपूर्ण निर्णय (Resolutions / Decisions) *
+                  {isEn ? "Resolutions / Decisions Passed *" : "लिए गए महत्वपूर्ण निर्णय (Resolutions / Decisions) *"}
                 </label>
                 <textarea
                   id="decisions"
                   rows={2.5}
-                  placeholder="सर्वसम्मति से कौन से निर्णय पारित हुए..."
+                  placeholder={isEn ? "Decisions unanimously approved during the session..." : "सर्वसम्मति से कौन से निर्णय पारित हुए..."}
                   value={decisions}
                   onChange={(e) => setDecisions(e.target.value)}
                   className="w-full px-4 py-3 bg-white border border-loom-beige rounded-xl focus:outline-none focus:ring-2 focus:ring-loom-gold focus:border-transparent font-body text-base placeholder-loom-beige text-loom-ink shadow-inner resize-none"
@@ -346,14 +361,16 @@ export const MeetingsPage: React.FC = () => {
                   disabled={submitting}
                   className="flex-1 font-heading font-bold py-3.5"
                 >
-                  रद्द करें (Cancel)
+                  {isEn ? "Cancel" : "रद्द करें (Cancel)"}
                 </Button>
                 <Button
                   type="submit"
                   disabled={submitting}
                   className="flex-1 font-heading font-bold py-3.5 bg-loom-wood text-white hover:bg-loom-wood-light"
                 >
-                  {submitting ? 'रिकॉर्डिंग चालू...' : 'बैठक सहेजें (Save Minutes)'}
+                  {submitting 
+                    ? (isEn ? "Recording..." : "रिकॉर्डिंग चालू...") 
+                    : (isEn ? "Save Minutes" : "बैठक सहेजें (Save Minutes)")}
                 </Button>
               </div>
             </form>
@@ -375,13 +392,13 @@ export const MeetingsPage: React.FC = () => {
 
             <div className="border-b border-loom-beige/30 pb-4 mb-6">
               <span className="bg-loom-gold/25 text-loom-wood px-3 py-1 rounded-full text-xs font-bold font-heading border border-loom-gold/30">
-                📅 बैठक विवरणी (Meeting Minutes)
+                {isEn ? "📅 Meeting Minutes" : "📅 बैठक विवरणी (Meeting Minutes)"}
               </span>
               <h2 className="font-heading text-2xl font-black text-loom-wood mt-2.5">
                 {selectedMeeting.title}
               </h2>
               <p className="font-body text-sm font-semibold text-loom-ink-light mt-1">
-                बैठक की दिनांक: <span className="text-loom-wood">{formatDate(selectedMeeting.date)}</span>
+                {isEn ? "Meeting Date: " : "बैठक की दिनांक: "}<span className="text-loom-wood">{formatDate(selectedMeeting.date)}</span>
               </p>
             </div>
 
@@ -389,7 +406,9 @@ export const MeetingsPage: React.FC = () => {
             <div className="mb-6">
               <h3 className="font-heading text-sm font-extrabold text-loom-wood flex items-center gap-1.5 mb-2.5 uppercase tracking-wide">
                 <Users className="w-4 h-4 text-loom-gold" />
-                उपस्थित बुनकर सदस्य ({selectedMeeting.attendees?.length || 0}):
+                {isEn 
+                  ? `Attending Weaver Members (${selectedMeeting.attendees?.length || 0}):`
+                  : `उपस्थित बुनकर सदस्य (${selectedMeeting.attendees?.length || 0}):`}
               </h3>
               <div className="flex flex-wrap gap-2">
                 {selectedMeeting.attendees && selectedMeeting.attendees.length > 0 ? (
@@ -402,7 +421,9 @@ export const MeetingsPage: React.FC = () => {
                     </span>
                   ))
                 ) : (
-                  <span className="text-xs text-loom-ink-light italic font-body">कोई सदस्य पंजीकृत नहीं है।</span>
+                  <span className="text-xs text-loom-ink-light italic font-body">
+                    {isEn ? "No members registered." : "कोई सदस्य पंजीकृत नहीं है।"}
+                  </span>
                 )}
               </div>
             </div>
@@ -411,7 +432,7 @@ export const MeetingsPage: React.FC = () => {
               {/* Agenda card */}
               <div className="p-4 bg-white rounded-xl border border-loom-beige/40">
                 <h4 className="font-heading text-xs font-bold text-loom-gold uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                  <BookOpen className="w-3.5 h-3.5" /> एजेंडा (Agenda)
+                  <BookOpen className="w-3.5 h-3.5" /> {isEn ? "Agenda" : "एजेंडा (Agenda)"}
                 </h4>
                 <p className="font-body text-sm text-loom-ink leading-relaxed whitespace-pre-wrap">{selectedMeeting.agenda}</p>
               </div>
@@ -419,7 +440,7 @@ export const MeetingsPage: React.FC = () => {
               {/* Proceedings card */}
               <div className="p-4 bg-white rounded-xl border border-loom-beige/40">
                 <h4 className="font-heading text-xs font-bold text-teal-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                  <FileText className="w-3.5 h-3.5" /> कार्यवाही (Minutes)
+                  <FileText className="w-3.5 h-3.5" /> {isEn ? "Minutes" : "कार्यवाही (Minutes)"}
                 </h4>
                 <p className="font-body text-sm text-loom-ink leading-relaxed whitespace-pre-wrap">{selectedMeeting.minutes}</p>
               </div>
@@ -427,7 +448,7 @@ export const MeetingsPage: React.FC = () => {
               {/* Decisions card */}
               <div className="p-4 bg-amber-50 border border-loom-gold/30 rounded-xl">
                 <h4 className="font-heading text-xs font-bold text-amber-800 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                  <CheckSquare className="w-3.5 h-3.5" /> निर्णय (Resolutions)
+                  <CheckSquare className="w-3.5 h-3.5" /> {isEn ? "Resolutions" : "निर्णय (Resolutions)"}
                 </h4>
                 <p className="font-body text-sm text-amber-900 font-medium leading-relaxed whitespace-pre-wrap">{selectedMeeting.decisions}</p>
               </div>
@@ -440,7 +461,7 @@ export const MeetingsPage: React.FC = () => {
                 onClick={() => setSelectedMeeting(null)}
                 className="font-heading font-bold px-6 py-2.5 bg-loom-wood text-white hover:bg-loom-wood-light"
               >
-                विवरण बंद करें (Close)
+                {isEn ? "Close" : "विवरण बंद करें (Close)"}
               </Button>
             </div>
           </div>

@@ -60,6 +60,7 @@ const TAG_TRANSLATIONS: Record<string, string> = {
 
 export const CooperativeProducts: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const isEn = i18n.language === 'en';
   const { userProfile } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,11 +88,37 @@ export const CooperativeProducts: React.FC = () => {
   const availableTags = ["बनारसी", "रेशम (Silk)", "सूती (Cotton)", "इकत (Ikat)", "जामदानी (Jamdani)", "खादी (Khadi)", "पश्मीना (Pashmina)", "जरी (Zari)"];
 
   const cooperativeId = userProfile?.cooperativeId || 'coop1';
-  const cooperativeName = userProfile?.displayName || t('coop.defaultName', 'काशी हथकरघा सहकारी समिति');
+  const cooperativeName = userProfile?.displayName || (isEn ? 'Kashi Handloom Cooperative Society' : 'काशी हथकरघा सहकारी समिति');
+
+  const getTagLabel = (tag: string) => {
+    if (!isEn) return tag;
+    const tagLabels: Record<string, string> = {
+      "बनारसी": "Banarasi",
+      "रेशम (Silk)": "Silk",
+      "सूती (Cotton)": "Cotton",
+      "इकत (Ikat)": "Ikat",
+      "जामदानी (Jamdani)": "Jamdani",
+      "खादी (Khadi)": "Khadi",
+      "पश्मीना (Pashmina)": "Pashmina",
+      "जरी (Zari)": "Zari"
+    };
+    return tagLabels[tag] || tag;
+  };
+
+  const getPresetLabel = (key: string, fallback: string) => {
+    if (!isEn) return fallback;
+    const presetLabels: Record<string, string> = {
+      "banarasiSilk": "Banarasi Silk",
+      "handloomCotton": "Handloom Cotton",
+      "colorfulYarns": "Colorful Yarns",
+      "ikatPattern": "Ikat Pattern"
+    };
+    return presetLabels[key] || fallback;
+  };
 
   useEffect(() => {
     fetchProducts();
-  }, [cooperativeId]);
+  }, [cooperativeId, i18n.language]);
 
   const fetchProducts = async () => {
     try {
@@ -122,7 +149,7 @@ export const CooperativeProducts: React.FC = () => {
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !description.trim() || !price || !quantityAvailable) {
-      setFormError(t('products.fillRequired', 'कृपया सभी आवश्यक फ़ील्ड भरें (Please fill all required fields)'));
+      setFormError(isEn ? 'Please fill all required fields.' : 'कृपया सभी आवश्यक फ़ील्ड भरें (Please fill all required fields)');
       return;
     }
 
@@ -134,7 +161,7 @@ export const CooperativeProducts: React.FC = () => {
       let imageUrls: string[] = [];
 
       if (useUpload && imageFile) {
-        setUploadProgress(t('products.uploading', 'छवि अपलोड हो रही है (Uploading image)...'));
+        setUploadProgress(isEn ? 'Uploading image...' : t('products.uploading', 'छवि अपलोड हो रही है (Uploading image)...'));
         // Temporary ID for path
         const tempId = Math.random().toString(36).substring(7);
         const storageRef = ref(storage, `products/${tempId}/${imageFile.name}`);
@@ -155,10 +182,10 @@ export const CooperativeProducts: React.FC = () => {
         quantityAvailable: Number(quantityAvailable),
         skillTags: selectedTags,
         handloomMark,
-        weaverStory: weaverStory || t('products.defaultWeaverStory', 'यह उत्कृष्ट उत्पाद हमारी सहकारी समिति के हुनरमंद बुनकर द्वारा पूर्णतः हस्तनिर्मित है।')
+        weaverStory: weaverStory || (isEn ? 'This exquisite product is entirely hand-woven by the skilled artisans of our cooperative.' : t('products.defaultWeaverStory', 'यह उत्कृष्ट उत्पाद हमारी सहकारी समिति के हुनरमंद बुनकर द्वारा पूर्णतः हस्तनिर्मित है।'))
       });
 
-      setFormSuccess(t('products.successListed', 'उत्पाद सफलतापूर्वक सूचीबद्ध किया गया! (Product successfully listed!)'));
+      setFormSuccess(isEn ? 'Product successfully listed!' : t('products.successListed', 'उत्पाद सफलतापूर्वक सूचीबद्ध किया गया! (Product successfully listed!)'));
       
       // Reset form
       setName('');
@@ -181,20 +208,20 @@ export const CooperativeProducts: React.FC = () => {
 
     } catch (err) {
       console.error("Error listing product:", err);
-      setFormError(t('products.addError', 'उत्पाद जोड़ने में त्रुटि हुई। कृपया पुनः प्रयास करें।'));
+      setFormError(isEn ? 'Failed to list product. Please try again.' : t('products.addError', 'उत्पाद जोड़ने में त्रुटि हुई। कृपया पुनः प्रयास करें।'));
     } finally {
       setFormSubmitting(false);
     }
   };
 
   const handleDelete = async (productId: string) => {
-    if (window.confirm(t('products.confirmDelete', 'क्या आप सचमुच इस उत्पाद को सूची से हटाना चाहते हैं?'))) {
+    if (window.confirm(isEn ? 'Are you sure you want to delete this product from listing?' : t('products.confirmDelete', 'क्या आप सचमुच इस उत्पाद को सूची से हटाना चाहते हैं?'))) {
       try {
         await deleteProduct(productId);
         fetchProducts();
       } catch (err) {
         console.error("Error deleting product:", err);
-        alert(t('products.deleteError', 'उत्पाद हटाने में त्रुटि हुई।'));
+        alert(isEn ? 'Error deleting product.' : t('products.deleteError', 'उत्पाद हटाने में त्रुटि हुई।'));
       }
     }
   };
@@ -206,10 +233,12 @@ export const CooperativeProducts: React.FC = () => {
         <div>
           <h1 className="font-heading text-3xl md:text-4xl font-bold text-loom-wood flex items-center gap-2">
             <ShoppingBag className="w-8 h-8 text-loom-gold" />
-            {t('products.title', 'सहकारी उत्पाद सूची (Cooperative Products)')}
+            {isEn ? "Cooperative Product Catalog" : t('products.title', 'सहकारी उत्पाद सूची (Cooperative Products)')}
           </h1>
           <p className="font-body text-base text-loom-ink-light mt-1">
-            {t('products.desc', 'अपने उत्कृष्ट हथकरघा उत्पादों को सीधे वैश्विक बाज़ार और खरीदारों (Buyers) के लिए सूचीबद्ध करें।')}
+            {isEn 
+              ? "List your finest handloom products directly to the global marketplace and buyers."
+              : t('products.desc', 'अपने उत्कृष्ट हथकरघा उत्पादों को सीधे वैश्विक बाज़ार और खरीदारों (Buyers) के लिए सूचीबद्ध करें।')}
           </p>
         </div>
         <Button
@@ -218,7 +247,7 @@ export const CooperativeProducts: React.FC = () => {
           className="flex items-center gap-2 px-6 py-3 bg-loom-wood text-white hover:bg-loom-wood-light font-heading font-bold rounded-xl shadow-md transition-all shrink-0 cursor-pointer"
         >
           <PlusCircle className="w-5 h-5" />
-          {t('products.addBtn', 'नया उत्पाद जोड़ें (Add Product)')}
+          {isEn ? "Add New Product" : t('products.addBtn', 'नया उत्पाद जोड़ें (Add Product)')}
         </Button>
       </div>
 
@@ -226,17 +255,23 @@ export const CooperativeProducts: React.FC = () => {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <div className="w-12 h-12 border-4 border-loom-gold border-t-transparent rounded-full animate-spin" />
-          <p className="font-heading text-lg text-loom-wood">{t('products.loading', 'उत्पाद सूची लोड हो रही है...')}</p>
+          <p className="font-heading text-lg text-loom-wood">
+            {isEn ? "Loading products catalog..." : t('products.loading', 'उत्पाद सूची लोड हो रही है...')}
+          </p>
         </div>
       ) : products.length === 0 ? (
         <div className="text-center py-16 bg-white/60 rounded-2xl border-2 border-dashed border-loom-beige p-8">
           <ShoppingBag className="w-16 h-16 text-loom-gold/50 mx-auto mb-4" />
-          <h3 className="font-heading text-2xl font-bold text-loom-wood mb-2">{t('products.empty', 'कोई उत्पाद सूचीबद्ध नहीं है')}</h3>
+          <h3 className="font-heading text-2xl font-bold text-loom-wood mb-2">
+            {isEn ? "No products listed yet" : t('products.empty', 'कोई उत्पाद सूचीबद्ध नहीं है')}
+          </h3>
           <p className="font-body text-loom-ink-light max-w-md mx-auto mb-6">
-            {t('products.emptyDesc', 'वर्तमान में आपकी सहकारी समिति का कोई उत्पाद प्रदर्शित नहीं है। "नया उत्पाद जोड़ें" बटन पर क्लिक करके पहला हस्तशिल्प सूचीबद्ध करें।')}
+            {isEn 
+              ? "Currently there are no products listed for your cooperative. Click 'Add New Product' to list your first craft."
+              : t('products.emptyDesc', 'वर्तमान में आपकी सहकारी समिति का कोई उत्पाद प्रदर्शित नहीं है। "नया उत्पाद जोड़ें" बटन पर क्लिक करके पहला हस्तशिल्प सूचीबद्ध करें।')}
           </p>
           <Button onClick={() => setShowModal(true)} className="vintage-button">
-            {t('products.listFirst', 'पहला उत्पाद सूचीबद्ध करें')}
+            {isEn ? "List First Product" : t('products.listFirst', 'पहला उत्पाद सूचीबद्ध करें')}
           </Button>
         </div>
       ) : (
@@ -257,17 +292,17 @@ export const CooperativeProducts: React.FC = () => {
                     {product.handloomMark && (
                       <span className="bg-loom-gold text-loom-wood text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-1 rounded-full shadow-md border border-loom-wood flex items-center gap-1">
                         <Award className="w-3.5 h-3.5" />
-                        {t('products.handloomMark', 'हैंडलूम मार्क')}
+                        {isEn ? "Handloom Mark" : t('products.handloomMark', 'हैंडलूम मार्क')}
                       </span>
                     )}
                     {product.hasTraceability && (
                       <span className="bg-emerald-600 text-white text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-1 rounded-full shadow-md border border-emerald-500 flex items-center gap-1">
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        {t('products.fairWageVerified', 'सत्यापित निष्पक्ष मजदूरी')}
+                        {isEn ? "Fair Wage Verified" : t('products.fairWageVerified', 'सत्यापित निष्पक्ष मजदूरी')}
                       </span>
                     )}
                     <span className="bg-white/95 text-loom-wood text-xs font-bold px-3 py-1 rounded-full shadow-md border border-loom-beige">
-                      {t('products.stockCount', 'स्टॉक: {{count}} पीस', { count: product.quantityAvailable })}
+                      {isEn ? `Stock: ${product.quantityAvailable} pcs` : t('products.stockCount', 'स्टॉक: {{count}} पीस', { count: product.quantityAvailable })}
                     </span>
                   </div>
                 </div>
@@ -278,7 +313,7 @@ export const CooperativeProducts: React.FC = () => {
                       {product.name}
                     </CardTitle>
                     <span className="font-heading text-lg font-black text-loom-wood shrink-0">
-                      ₹{product.price.toLocaleString(i18n.language === 'en' ? 'en-US' : (i18n.language === 'bn' ? 'bn-IN' : 'hi-IN'))}
+                      ₹{product.price.toLocaleString(isEn ? 'en-US' : (i18n.language === 'bn' ? 'bn-IN' : 'hi-IN'))}
                     </span>
                   </div>
 
@@ -287,7 +322,7 @@ export const CooperativeProducts: React.FC = () => {
                     <div className="flex flex-wrap gap-1 mt-2">
                       {product.skillTags.map((tag, i) => (
                         <span key={i} className="text-[10px] bg-loom-gold/15 text-loom-wood border border-loom-gold/30 px-2 py-0.5 rounded font-bold">
-                          {t(TAG_TRANSLATIONS[tag] || tag, tag)}
+                          {getTagLabel(tag)}
                         </span>
                       ))}
                     </div>
@@ -303,7 +338,7 @@ export const CooperativeProducts: React.FC = () => {
                   <div className="bg-loom-parchment/60 rounded-xl p-3 border border-loom-beige/40 text-xs text-loom-ink-light font-body">
                     <div className="flex items-center gap-1.5 text-loom-wood font-bold mb-1">
                       <BookOpen className="w-3.5 h-3.5" />
-                      {t('products.artisanStory', 'बुनकर गाथा (Artisan Story):')}
+                      {isEn ? "Artisan Story:" : t('products.artisanStory', 'बुनकर गाथा (Artisan Story):')}
                     </div>
                     <p className="line-clamp-2 italic leading-relaxed">"{product.weaverStory}"</p>
                   </div>
@@ -313,12 +348,12 @@ export const CooperativeProducts: React.FC = () => {
               {/* Card Footer Actions */}
               <div className="p-4 border-t border-loom-beige/30 bg-loom-cream/30 flex justify-between items-center">
                 <span className="text-xs text-loom-ink-light/80 font-body">
-                  {t('products.date', 'दिनांक: {{date}}', { date: new Date(product.createdAt).toLocaleDateString(i18n.language === 'en' ? 'en-US' : (i18n.language === 'bn' ? 'bn-IN' : 'hi-IN')) })}
+                  {isEn ? `Date: ${new Date(product.createdAt).toLocaleDateString('en-US')}` : t('products.date', 'दिनांक: {{date}}', { date: new Date(product.createdAt).toLocaleDateString(i18n.language === 'en' ? 'en-US' : (i18n.language === 'bn' ? 'bn-IN' : 'hi-IN')) })}
                 </span>
                 <Button 
                   onClick={() => handleDelete(product.productId)}
                   className="p-2 text-loom-error hover:bg-loom-error/10 hover:text-loom-error rounded-xl cursor-pointer transition-colors"
-                  title={t('common.delete', 'हटाएं')}
+                  title={isEn ? "Delete" : t('common.delete', 'हटाएं')}
                 >
                   <Trash2 className="w-5 h-5" />
                 </Button>
@@ -338,10 +373,10 @@ export const CooperativeProducts: React.FC = () => {
               <div className="relative z-10">
                 <h2 className="font-heading text-2xl font-bold flex items-center gap-2">
                   <PlusCircle className="w-6 h-6 text-loom-gold" />
-                  {t('products.addModalTitle', 'उत्पाद सूची में नया उत्पाद जोड़ें')}
+                  {isEn ? "Add New Product to Catalog" : t('products.addModalTitle', 'उत्पाद सूची में नया उत्पाद जोड़ें')}
                 </h2>
                 <p className="text-xs text-loom-gold/90 mt-1">
-                  {t('products.addModalDesc', 'काशी हथकरघा गुणवत्ता मापदंडों के साथ सीधे खरीदारों को प्रस्तुत करें।')}
+                  {isEn ? "Present directly to buyers with handloom quality metrics." : t('products.addModalDesc', 'काशी हथकरघा गुणवत्ता मापदंडों के साथ सीधे खरीदारों को प्रस्तुत करें।')}
                 </p>
               </div>
               <button 
@@ -369,20 +404,20 @@ export const CooperativeProducts: React.FC = () => {
               {/* Basic Details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-loom-wood mb-1">{t('products.nameLabel', 'उत्पाद का नाम (Product Name) *')}</label>
+                  <label className="block text-sm font-bold text-loom-wood mb-1">{isEn ? "Product Name *" : t('products.nameLabel', 'उत्पाद का नाम (Product Name) *')}</label>
                   <Input 
                     type="text" 
-                    placeholder={t('products.namePlaceholder', 'उदा. शाही बनारसी रेशमी साड़ी - लाल')}
+                    placeholder={isEn ? "e.g. Royal Banarasi Silk Saree - Red" : t('products.namePlaceholder', 'उदा. शाही बनारसी रेशमी साड़ी - लाल')}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-loom-wood mb-1">{t('products.priceLabel', 'मूल्य (Price in ₹) *')}</label>
+                  <label className="block text-sm font-bold text-loom-wood mb-1">{isEn ? "Price (in ₹) *" : t('products.priceLabel', 'मूल्य (Price in ₹) *')}</label>
                   <Input 
                     type="number" 
-                    placeholder={t('products.pricePlaceholder', 'उदा. 15400')}
+                    placeholder={isEn ? "e.g. 15400" : t('products.pricePlaceholder', 'उदा. 15400')}
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     required
@@ -392,10 +427,10 @@ export const CooperativeProducts: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-loom-wood mb-1">{t('products.descriptionLabel', 'उत्पाद विवरण (Description) *')}</label>
+                <label className="block text-sm font-bold text-loom-wood mb-1">{isEn ? "Product Description *" : t('products.descriptionLabel', 'उत्पाद विवरण (Description) *')}</label>
                 <textarea
                   className="w-full p-3 bg-white border border-loom-beige rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-loom-gold min-h-[80px]"
-                  placeholder={t('products.descriptionPlaceholder', 'उत्पाद की हस्तकला तकनीक, धागों की गुणवत्ता और विशिष्टताओं का विस्तृत विवरण...')}
+                  placeholder={isEn ? "Provide craft technique, yarn grade details, etc..." : t('products.descriptionPlaceholder', 'उत्पाद की हस्तकला तकनीक, धागों की गुणवत्ता और विशिष्टताओं का विस्तृत विवरण...')}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   required
@@ -404,10 +439,10 @@ export const CooperativeProducts: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-loom-wood mb-1">{t('products.stockLabel', 'उपलब्ध मात्रा (Available Stock) *')}</label>
+                  <label className="block text-sm font-bold text-loom-wood mb-1">{isEn ? "Available Stock *" : t('products.stockLabel', 'उपलब्ध मात्रा (Available Stock) *')}</label>
                   <Input 
                     type="number" 
-                    placeholder={t('products.stockPlaceholder', 'उदा. 5')}
+                    placeholder={isEn ? "e.g. 5" : t('products.stockPlaceholder', 'उदा. 5')}
                     value={quantityAvailable}
                     onChange={(e) => setQuantityAvailable(e.target.value)}
                     required
@@ -424,7 +459,7 @@ export const CooperativeProducts: React.FC = () => {
                     />
                     <span className="text-sm font-bold text-loom-wood flex items-center gap-1">
                       <Award className="w-4 h-4 text-loom-gold" />
-                      {t('products.certifiedHandloomLabel', 'सर्टिफाइड हैंडलूम मार्क (Certified Handloom Mark)')}
+                      {isEn ? "Certified Handloom Mark" : t('products.certifiedHandloomLabel', 'सर्टिफाइड हैंडलूम मार्क (Certified Handloom Mark)')}
                     </span>
                   </label>
                 </div>
@@ -432,7 +467,7 @@ export const CooperativeProducts: React.FC = () => {
 
               {/* Tag Selection */}
               <div>
-                <label className="block text-sm font-bold text-loom-wood mb-1.5">{t('products.tagsLabel', 'कौशल / तकनीक टैग (Skill & Fabric Tags)')}</label>
+                <label className="block text-sm font-bold text-loom-wood mb-1.5">{isEn ? "Skill & Fabric Tags" : t('products.tagsLabel', 'कौशल / तकनीक टैग (Skill & Fabric Tags)')}</label>
                 <div className="flex flex-wrap gap-2">
                   {availableTags.map((tag) => {
                     const isSelected = selectedTags.includes(tag);
@@ -447,7 +482,7 @@ export const CooperativeProducts: React.FC = () => {
                             : 'bg-white text-loom-wood border-loom-beige hover:bg-loom-sand/10'
                         }`}
                       >
-                        {t(TAG_TRANSLATIONS[tag] || tag, tag)}
+                        {getTagLabel(tag)}
                       </button>
                     );
                   })}
@@ -456,10 +491,10 @@ export const CooperativeProducts: React.FC = () => {
 
               {/* Weaver Story */}
               <div>
-                <label className="block text-sm font-bold text-loom-wood mb-1">{t('products.artisanStoryLabel', 'बुनकर गाथा / कारीगर कहानी (Artisan Story)')}</label>
+                <label className="block text-sm font-bold text-loom-wood mb-1">{isEn ? "Artisan Story / Weaver Story" : t('products.artisanStoryLabel', 'बुनकर गाथा / कारीगर कहानी (Artisan Story)')}</label>
                 <textarea
                   className="w-full p-3 bg-white border border-loom-beige rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-loom-gold min-h-[60px]"
-                  placeholder={t('products.artisanStoryPlaceholder', 'बुनकर कारीगर का नाम और उनकी कला के प्रति समर्पण का विवरण...')}
+                  placeholder={isEn ? "Describe the weaver and their craft dedication..." : t('products.artisanStoryPlaceholder', 'बुनकर कारीगर का नाम और उनकी कला के प्रति समर्पण का विवरण...')}
                   value={weaverStory}
                   onChange={(e) => setWeaverStory(e.target.value)}
                 />
@@ -468,21 +503,21 @@ export const CooperativeProducts: React.FC = () => {
               {/* Image Source Selection */}
               <div className="border-t border-loom-beige pt-4 space-y-3">
                 <div className="flex justify-between items-center">
-                  <label className="block text-sm font-bold text-loom-wood">{t('products.imageLabel', 'उत्पाद की तस्वीर (Product Image)')}</label>
+                  <label className="block text-sm font-bold text-loom-wood">{isEn ? "Product Image" : t('products.imageLabel', 'उत्पाद की तस्वीर (Product Image)')}</label>
                   <div className="flex gap-2 rounded-xl bg-loom-beige/25 p-0.5 border border-loom-beige text-xs font-bold">
                     <button
                       type="button"
                       onClick={() => setUseUpload(false)}
                       className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${!useUpload ? 'bg-white shadow-sm text-loom-wood' : 'text-loom-ink-light'}`}
                     >
-                      {t('products.presetsBtn', 'सुंदर प्रीसेट (Presets)')}
+                      {isEn ? "Beautiful Presets" : t('products.presetsBtn', 'सुंदर प्रीसेट (Presets)')}
                     </button>
                     <button
                       type="button"
                       onClick={() => setUseUpload(true)}
                       className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${useUpload ? 'bg-white shadow-sm text-loom-wood' : 'text-loom-ink-light'}`}
                     >
-                      {t('products.uploadBtn', 'अपलोड करें (Upload)')}
+                      {isEn ? "Upload Photo" : t('products.uploadBtn', 'अपलोड करें (Upload)')}
                     </button>
                   </div>
                 </div>
@@ -500,9 +535,9 @@ export const CooperativeProducts: React.FC = () => {
                             isSelected ? 'border-loom-gold ring-2 ring-loom-gold/50 scale-[0.98]' : 'border-transparent opacity-75 hover:opacity-100'
                           }`}
                         >
-                          <img src={preset.url} alt={t('products.preset.' + preset.key, preset.name)} className="w-full h-full object-cover" />
+                          <img src={preset.url} alt={getPresetLabel(preset.key, preset.name)} className="w-full h-full object-cover" />
                           <div className="absolute inset-x-0 bottom-0 bg-black/60 p-1.5 text-[10px] text-white text-center font-semibold truncate">
-                            {t('products.preset.' + preset.key, preset.name)}
+                            {getPresetLabel(preset.key, preset.name)}
                           </div>
                           {isSelected && (
                             <div className="absolute top-2 right-2 bg-loom-gold text-loom-wood p-0.5 rounded-full">
@@ -527,13 +562,13 @@ export const CooperativeProducts: React.FC = () => {
                       <div className="w-12 h-12 bg-loom-gold/10 text-loom-gold rounded-full flex items-center justify-center mb-1">
                         <Upload className="w-6 h-6" />
                       </div>
-                      <span className="font-heading font-bold text-sm text-loom-wood">{t('products.browsePhoto', 'हथकरघा उत्पाद फोटो चुनें (Browse photo)')}</span>
-                      <span className="text-xs text-loom-ink-light font-body">{t('products.uploadDesc', 'PNG, JPG, या GIF (अधिकतम 3MB)')}</span>
+                      <span className="font-heading font-bold text-sm text-loom-wood">{isEn ? "Choose Product Photo" : t('products.browsePhoto', 'हथकरघा उत्पाद फोटो चुनें (Browse photo)')}</span>
+                      <span className="text-xs text-loom-ink-light font-body">{isEn ? "PNG, JPG, or GIF (max 3MB)" : t('products.uploadDesc', 'PNG, JPG, या GIF (अधिकतम 3MB)')}</span>
                     </label>
                     {imageFile && (
                       <div className="mt-4 flex items-center gap-2 bg-loom-gold/15 text-loom-wood px-3.5 py-1.5 rounded-xl border border-loom-gold/30 text-xs font-bold">
                         <ImageIcon className="w-4 h-4" />
-                        {t('products.selectedFile', 'चयनित फ़ाइल: {{name}}', { name: imageFile.name })}
+                        {isEn ? `Selected file: ${imageFile.name}` : t('products.selectedFile', 'चयनित फ़ाइल: {{name}}', { name: imageFile.name })}
                       </div>
                     )}
                     {uploadProgress && (
@@ -550,7 +585,7 @@ export const CooperativeProducts: React.FC = () => {
                   onClick={() => setShowModal(false)}
                   className="px-5 py-2.5 bg-white border border-loom-beige hover:bg-loom-sand/15 text-loom-ink rounded-xl font-heading font-bold transition-all cursor-pointer"
                 >
-                  {t('common.cancel', 'रद्द करें')}
+                  {isEn ? "Cancel" : t('common.cancel', 'रद्द करें')}
                 </Button>
                 <Button
                   type="submit"
@@ -562,7 +597,7 @@ export const CooperativeProducts: React.FC = () => {
                   ) : (
                     <Sparkles className="w-4 h-4 text-loom-gold" />
                   )}
-                  {t('products.publishBtn', 'उत्पाद प्रकाशित करें')}
+                  {isEn ? "Publish Product" : t('products.publishBtn', 'उत्पाद प्रकाशित करें')}
                 </Button>
               </div>
             </form>

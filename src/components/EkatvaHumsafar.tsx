@@ -29,6 +29,7 @@ interface EkatvaHumsafarProps {
 export const EkatvaHumsafar: React.FC<EkatvaHumsafarProps> = ({ role, userName }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -39,6 +40,17 @@ export const EkatvaHumsafar: React.FC<EkatvaHumsafarProps> = ({ role, userName }
   const [tempKey, setTempKey] = useState(apiKey);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isExpanded) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('#humsafar-trigger')) return;
+      setIsExpanded(false);
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, [isExpanded]);
 
   // Suggested queries based on user role
   const weaverPresets = [
@@ -135,25 +147,54 @@ export const EkatvaHumsafar: React.FC<EkatvaHumsafarProps> = ({ role, userName }
     }
   };
 
+  const handleClose = () => {
+    setIsOpen(false);
+    setIsExpanded(false);
+  };
+
   return (
     <>
       {/* Floating Trigger Button */}
       <button
-        onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 ${
-          role === 'weaver' ? 'right-20 sm:right-6' : 'right-6'
-        } sm:bottom-24 z-40 bg-loom-wood hover:bg-loom-wood-light text-white p-4 rounded-full shadow-2xl flex items-center gap-2 border-2 border-loom-gold transition-transform hover:scale-105 cursor-pointer`}
+        type="button"
+        onClick={(e) => {
+          if (!isExpanded) {
+            e.stopPropagation();
+            setIsExpanded(true);
+          } else {
+            setIsOpen(true);
+          }
+        }}
+        aria-label={t('humsafar.open', 'Open AI Co-pilot')}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        style={{
+          transform: isExpanded ? 'translateX(-16px)' : 'translateX(28px)',
+          transition: 'transform 350ms cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s, box-shadow 0.2s'
+        }}
+        className={`fixed ${
+          role === 'weaver' ? 'bottom-24 sm:bottom-24 right-0' : 'bottom-4 sm:bottom-6 right-0'
+        } z-40 h-14 bg-loom-wood hover:bg-loom-wood-light text-white px-4 rounded-l-2xl rounded-r-none shadow-2xl flex items-center justify-center gap-2.5 border-2 border-r-0 border-loom-gold cursor-pointer`}
         id="humsafar-trigger"
       >
-        <Sparkles className="w-6 h-6 text-loom-gold animate-pulse" />
-        <span className="font-heading font-black text-sm pr-1 hidden sm:inline">एआई हमसफ़र (AI Co-pilot)</span>
+        <Sparkles className="w-6 h-6 shrink-0 text-loom-gold animate-pulse" />
+        <span 
+          style={{
+            transition: 'max-width 350ms ease-in-out, opacity 300ms ease-in-out, margin 350ms ease-in-out',
+            maxWidth: isExpanded ? '200px' : '0px',
+            opacity: isExpanded ? 1 : 0,
+          }}
+          className="font-heading font-black text-sm pr-1 overflow-hidden whitespace-nowrap block"
+        >
+          एआई हमसफ़र (AI Co-pilot)
+        </span>
       </button>
 
       {/* Slide-over Drawer Chat Panel */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs animate-fade-in">
           {/* Backdrop Closer */}
-          <div className="absolute inset-0" onClick={() => setIsOpen(false)} />
+          <div className="absolute inset-0" onClick={handleClose} />
 
           {/* Drawer Body styled with deep vintage parchment aesthetic */}
           <div className="relative w-full sm:max-w-md h-full bg-loom-cream border-l-0 sm:border-l-4 border-loom-gold flex flex-col shadow-2xl animate-slide-in">
@@ -192,7 +233,7 @@ export const EkatvaHumsafar: React.FC<EkatvaHumsafarProps> = ({ role, userName }
                 </button>
                 <button
                   type="button"
-                  onClick={() => setIsOpen(false)}
+                  onClick={handleClose}
                   className="p-1.5 text-loom-cream/80 hover:text-white rounded-lg hover:bg-white/10 cursor-pointer"
                   title="छोटा करें"
                 >
