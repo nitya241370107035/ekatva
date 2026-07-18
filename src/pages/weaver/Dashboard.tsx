@@ -54,45 +54,69 @@ import { JobSakhi } from '../../components/JobSakhi';
 import { EmpathyLoom } from '../../components/EmpathyLoom';
 import { checkEligibility } from '../../utils/schemeEligibility';
 
-const formatDate = (dateStr: any) => {
-  if (!dateStr) return '';
-  const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
-  if (date && typeof date.toDate === 'function') {
-    // Handle Firestore Timestamp if needed
-    return date.toDate().toLocaleDateString('hi-IN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  }
-  const d = new Date(date);
-  return isNaN(d.getTime()) ? '' : d.toLocaleDateString('hi-IN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-};
-
-const getCategoryText = (category: string) => {
-  switch (category) {
-    case 'payment':
-      return 'भुगतान (Payment)';
-    case 'raw_material':
-      return 'कच्चा माल (Raw Material)';
-    case 'quality':
-      return 'गुणवत्ता (Quality)';
-    default:
-      return 'अन्य (Other)';
-  }
-};
-
 export const WeaverDashboard: React.FC = () => {
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isEn = i18n.language === 'en';
+
   const [activeTab, setActiveTab] = useState('dashboard');
   const [eligibleSchemesCount, setEligibleSchemesCount] = useState<number>(0);
+
+  const formatDate = (dateStr: any) => {
+    if (!dateStr) return '';
+    const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
+    if (date && typeof date.toDate === 'function') {
+      return date.toDate().toLocaleDateString(isEn ? 'en-US' : 'hi-IN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+    const d = new Date(date);
+    return isNaN(d.getTime()) ? '' : d.toLocaleDateString(isEn ? 'en-US' : 'hi-IN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const getCategoryText = (category: string) => {
+    switch (category) {
+      case 'payment':
+        return isEn ? 'Payment Related' : 'भुगतान (Payment)';
+      case 'raw_material':
+        return isEn ? 'Raw Material' : 'कच्चा माल (Raw Material)';
+      case 'quality':
+        return isEn ? 'Quality Control' : 'गुणवत्ता (Quality)';
+      default:
+        return isEn ? 'Other' : 'अन्य (Other)';
+    }
+  };
+
+  const getDisplayMaterialName = (name: string) => {
+    if (!isEn) return name;
+    const map: Record<string, string> = {
+      'सूती धागा': 'Cotton Yarn',
+      'रेसम धागा': 'Silk Yarn',
+      'जरी': 'Zari Thread',
+      'रंगाई सामग्री': 'Dyeing Colors'
+    };
+    return map[name] || name;
+  };
+
+  const getDisplayUnit = (unit: string) => {
+    if (!isEn) return unit;
+    const map: Record<string, string> = {
+      'किलोग्राम': 'kg',
+      'ग्राम': 'g',
+      'लीटर': 'Litre',
+      'मीटर': 'meter',
+      'कोन': 'cone'
+    };
+    return map[unit] || unit;
+  };
 
   // Check state from location navigation
   useEffect(() => {
@@ -278,11 +302,11 @@ export const WeaverDashboard: React.FC = () => {
   const handleRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reqQuantity || parseFloat(reqQuantity) <= 0) {
-      setReqError('कृपया वैध मात्रा दर्ज करें');
+      setReqError(isEn ? 'Please enter a valid quantity' : 'कृपया वैध मात्रा दर्ज करें');
       return;
     }
     if (!reqRequiredByDate) {
-      setReqError('कृपया आवश्यकता की तिथि दर्ज करें');
+      setReqError(isEn ? 'Please select a required by date' : 'कृपया आवश्यकता की तिथि दर्ज करें');
       return;
     }
 
@@ -291,7 +315,7 @@ export const WeaverDashboard: React.FC = () => {
 
     try {
       const coopId = userProfile?.cooperativeId || 'coop1';
-      const weaverName = userProfile?.displayName || 'बुनकर';
+      const weaverName = userProfile?.displayName || (isEn ? 'Weaver' : 'बुनकर');
       const unit = reqMaterialName === "रंगाई सामग्री" ? "लीटर" : "किलोग्राम";
 
       await createIndentRequest({
@@ -307,11 +331,11 @@ export const WeaverDashboard: React.FC = () => {
       setReqQuantity('');
       setReqRequiredByDate('');
       setShowRequestModal(false);
-      setToastMessage('कच्चे माल का अनुरोध सफलतापूर्वक दर्ज किया गया!');
+      setToastMessage(isEn ? 'Raw material request submitted successfully!' : 'कच्चे माल का अनुरोध सफलतापूर्वक दर्ज किया गया!');
       await fetchRequestsData();
     } catch (err) {
       console.error("Error submitting material request:", err);
-      setReqError('अनुरोध दर्ज करने में असमर्थ। कृपया पुनः प्रयास करें।');
+      setReqError(isEn ? 'Unable to submit request. Please try again.' : 'अनुरोध दर्ज करने में असमर्थ। कृपया पुनः प्रयास करें।');
     } finally {
       setSubmittingRequest(false);
     }
@@ -362,22 +386,26 @@ export const WeaverDashboard: React.FC = () => {
       
       if (isLate) {
         await updateWeaverReliabilityScore(currentUser.uid, -3);
-        setToastMessage('बुनाई सफलतापूर्वक पूरी की गई! (समय सीमा समाप्त होने के कारण विश्वसनीयता अंक -3 किए गए हैं)');
+        setToastMessage(isEn 
+          ? 'Weaving completed! (Reliability score deducted by 3 due to delay)' 
+          : 'बुनाई सफलतापूर्वक पूरी की गई! (समय सीमा समाप्त होने के कारण विश्वसनीयता अंक -3 किए गए हैं)');
       } else {
-        setToastMessage(newStatus === 'in_progress' ? 'बुनाई सफलतापूर्वक शुरू हुई!' : 'बुनाई सफलतापूर्वक पूरी की गई!');
+        setToastMessage(newStatus === 'in_progress' 
+          ? (isEn ? 'Weaving successfully started!' : 'बुनाई सफलतापूर्वक शुरू हुई!') 
+          : (isEn ? 'Weaving successfully completed!' : 'बुनाई सफलतापूर्वक पूरी की गई!'));
       }
       
       await fetchJobCardsData();
     } catch (err) {
       console.error("Error updating status:", err);
-      setToastMessage('स्थिति अपडेट करने में त्रुटि आई।');
+      setToastMessage(isEn ? 'Error updating job card status.' : 'स्थिति अपडेट करने में त्रुटि आई।');
     }
   };
 
   const handleGrievanceSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!gSubject.trim() || !gDescription.trim()) {
-      setGError('कृपया सभी आवश्यक फ़ील्ड भरें (Please fill all fields)');
+      setGError(isEn ? 'Please fill all required fields' : 'कृपया सभी आवश्यक फ़ील्ड भरें (Please fill all fields)');
       return;
     }
 
@@ -386,7 +414,7 @@ export const WeaverDashboard: React.FC = () => {
 
     try {
       const coopId = userProfile?.cooperativeId || 'coop1';
-      const weaverName = userProfile?.displayName || 'बुनकर';
+      const weaverName = userProfile?.displayName || (isEn ? 'Weaver' : 'बुनकर');
 
       // 1. Create the grievance ticket
       const newGId = await createGrievance({
@@ -417,7 +445,7 @@ export const WeaverDashboard: React.FC = () => {
       await fetchGrievancesData();
     } catch (err) {
       console.error("Error submitting grievance:", err);
-      setGError('शिकायत दर्ज करने में असमर्थ। कृपया पुनः प्रयास करें।');
+      setGError(isEn ? 'Unable to submit grievance. Please try again.' : 'शिकायत दर्ज करने में असमर्थ। कृपया पुनः प्रयास करें।');
     } finally {
       setSubmittingGrievance(false);
     }
@@ -427,7 +455,9 @@ export const WeaverDashboard: React.FC = () => {
     if (loadingProfile && activeTab === 'dashboard') {
       return (
         <div className="flex justify-center items-center py-12">
-          <p className="font-heading text-lg text-loom-wood animate-pulse">प्रोफाइल लोड हो रही है...</p>
+          <p className="font-heading text-lg text-loom-wood animate-pulse">
+            {isEn ? 'Loading profile...' : 'प्रोफाइल लोड हो रही है...'}
+          </p>
         </div>
       );
     }
@@ -462,20 +492,24 @@ export const WeaverDashboard: React.FC = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2.5 font-heading text-xl text-loom-wood">
                     <User className="text-loom-gold w-6 h-6" />
-                    बुनकर प्रोफ़ाइल विवरण (Profile Details)
+                    {isEn ? "Weaver Profile Details" : "बुनकर प्रोफ़ाइल विवरण (Profile Details)"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6 text-lg">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="p-4 bg-loom-cream/40 rounded-xl border border-loom-beige/40">
-                      <span className="text-sm text-loom-ink-light block font-semibold">पूरा नाम (Full Name)</span>
+                      <span className="text-sm text-loom-ink-light block font-semibold">
+                        {isEn ? "Full Name" : "पूरा नाम (Full Name)"}
+                      </span>
                       <span className="font-heading text-xl font-bold text-loom-wood mt-1 block">
-                        {userProfile?.displayName || 'रमेश कुमार'}
+                        {userProfile?.displayName || 'Ramesh Kumar'}
                       </span>
                     </div>
 
                     <div className="p-4 bg-loom-cream/40 rounded-xl border border-loom-beige/40">
-                      <span className="text-sm text-loom-ink-light block font-semibold">संपर्क सूत्र (Mobile Phone)</span>
+                      <span className="text-sm text-loom-ink-light block font-semibold">
+                        {isEn ? "Mobile Phone" : "संपर्क सूत्र (Mobile Phone)"}
+                      </span>
                       <span className="font-heading text-xl font-bold text-loom-wood mt-1 block flex items-center gap-1.5">
                         <Phone className="w-4 h-4 text-loom-gold" />
                         {weaverProfile?.phone || '9876543210'}
@@ -483,40 +517,50 @@ export const WeaverDashboard: React.FC = () => {
                     </div>
 
                     <div className="p-4 bg-loom-cream/40 rounded-xl border border-loom-beige/40">
-                      <span className="text-sm text-loom-ink-light block font-semibold">अनुभव (Experience)</span>
+                      <span className="text-sm text-loom-ink-light block font-semibold">
+                        {isEn ? "Experience" : "अनुभव (Experience)"}
+                      </span>
                       <span className="font-heading text-xl font-bold text-loom-wood mt-1 block flex items-center gap-1.5">
                         <Briefcase className="w-4 h-4 text-loom-gold" />
-                        {weaverProfile?.experience ? `${weaverProfile.experience} वर्ष` : '15 वर्ष'}
+                        {weaverProfile?.experience ? (isEn ? `${weaverProfile.experience} years` : `${weaverProfile.experience} वर्ष`) : (isEn ? '15 years' : '15 वर्ष')}
                       </span>
                     </div>
 
                     <div className="p-4 bg-loom-cream/40 rounded-xl border border-loom-beige/40">
-                      <span className="text-sm text-loom-ink-light block font-semibold">कार्यरत करघे (Looms Owned)</span>
+                      <span className="text-sm text-loom-ink-light block font-semibold">
+                        {isEn ? "Looms Owned" : "कार्यरत करघे (Looms Owned)"}
+                      </span>
                       <span className="font-heading text-xl font-bold text-loom-wood mt-1 block flex items-center gap-1.5">
                         <Layers className="w-4 h-4 text-loom-gold" />
-                        {weaverProfile?.numberOfLooms ? `${weaverProfile.numberOfLooms} करघा` : '2 करघा'}
+                        {weaverProfile?.numberOfLooms ? (isEn ? `${weaverProfile.numberOfLooms} looms` : `${weaverProfile.numberOfLooms} करघा`) : (isEn ? '2 looms' : '2 करघा')}
                       </span>
                     </div>
 
                     <div className="p-4 bg-loom-cream/40 rounded-xl border border-loom-beige/40">
-                      <span className="text-sm text-loom-ink-light block font-semibold">दैनिक क्षमता (Daily Capacity)</span>
+                      <span className="text-sm text-loom-ink-light block font-semibold">
+                        {isEn ? "Daily Capacity" : "दैनिक क्षमता (Daily Capacity)"}
+                      </span>
                       <span className="font-heading text-xl font-bold text-loom-wood mt-1 block flex items-center gap-1.5">
                         <Compass className="w-4 h-4 text-loom-gold" />
-                        {weaverProfile?.dailyCapacity ? `${weaverProfile.dailyCapacity} थान प्रतिदिन` : '1 थान'}
+                        {weaverProfile?.dailyCapacity ? (isEn ? `${weaverProfile.dailyCapacity} meters/day` : `${weaverProfile.dailyCapacity} थान प्रतिदिन`) : (isEn ? '1 piece' : '1 थान')}
                       </span>
                     </div>
 
                     <div className="p-4 bg-loom-cream/40 rounded-xl border border-loom-beige/40">
-                      <span className="text-sm text-loom-ink-light block font-semibold">संबद्ध सहकारी समिति (Cooperative)</span>
+                      <span className="text-sm text-loom-ink-light block font-semibold">
+                        {isEn ? "Cooperative" : "संबद्ध सहकारी समिति (Cooperative)"}
+                      </span>
                       <span className="font-heading text-xl font-bold text-loom-wood mt-1 block">
-                        बुनकर सहकारी समिति ({weaverProfile?.cooperativeId || 'coop1'})
+                        {isEn ? `Weaver Cooperative (${weaverProfile?.cooperativeId || 'coop1'})` : `बुनकर सहकारी समिति (${weaverProfile?.cooperativeId || 'coop1'})`}
                       </span>
                     </div>
                   </div>
 
                   {/* Skills tags */}
                   <div className="pt-4 border-t border-loom-beige/30">
-                    <span className="text-sm text-loom-ink-light block font-bold mb-3">विशेष बुनाई शैलीयाँ (Skill tags)</span>
+                    <span className="text-sm text-loom-ink-light block font-bold mb-3">
+                      {isEn ? "Special Weaving Skills (Tags)" : "विशेष बुनाई शैलीयाँ (Skill tags)"}
+                    </span>
                     <div className="flex flex-wrap gap-2.5">
                       {weaverProfile?.skillTags && weaverProfile.skillTags.length > 0 ? (
                         weaverProfile.skillTags.map((tag, idx) => (
@@ -526,7 +570,7 @@ export const WeaverDashboard: React.FC = () => {
                         ))
                       ) : (
                         <span className="bg-loom-gold/25 border border-loom-gold/50 px-3.5 py-1.5 rounded-full font-heading text-base font-bold text-loom-ink">
-                          बनारसी
+                          {isEn ? 'Banarasi' : 'बनारसी'}
                         </span>
                       )}
                     </div>
@@ -539,14 +583,14 @@ export const WeaverDashboard: React.FC = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2.5 font-heading text-xl text-loom-wood">
                     <MapPin className="text-loom-gold w-6 h-6" />
-                    निवास स्थान का पता (Address)
+                    {isEn ? "Residence Address" : "निवास स्थान का पता (Address)"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-lg">
                   <div className="p-4 bg-loom-cream/40 rounded-xl border border-loom-beige/40 font-body">
-                    <p className="font-semibold text-loom-ink">{weaverProfile?.address?.street || 'वार्ड नं 4, पीली कोठी'}</p>
+                    <p className="font-semibold text-loom-ink">{weaverProfile?.address?.street || 'Ward No. 4, Peeli Kothi'}</p>
                     <p className="text-loom-ink-light">
-                      {weaverProfile?.address?.city || 'वाराणसी'}, {weaverProfile?.address?.state || 'उत्तर प्रदेश'} - {weaverProfile?.address?.pincode || '221001'}
+                      {weaverProfile?.address?.city || 'Varanasi'}, {weaverProfile?.address?.state || 'Uttar Pradesh'} - {weaverProfile?.address?.pincode || '221001'}
                     </p>
                   </div>
                 </CardContent>
@@ -568,7 +612,9 @@ export const WeaverDashboard: React.FC = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="p-4 bg-loom-gold/10 rounded-2xl border border-loom-gold/20 text-center font-body">
-                    <span className="text-xs text-loom-ink-light font-bold block">समिति के लिए योग्य सरकारी योजनाएं</span>
+                    <span className="text-xs text-loom-ink-light font-bold block">
+                      {isEn ? "Cooperative Eligible Schemes" : "समिति के लिए योग्य सरकारी योजनाएं"}
+                    </span>
                     <span className="font-heading text-4xl font-black block mt-1 text-loom-wood">
                       {eligibleSchemesCount}
                     </span>
@@ -577,7 +623,7 @@ export const WeaverDashboard: React.FC = () => {
                     onClick={() => navigate('/weaver/schemes')}
                     className="w-full py-3 bg-loom-wood hover:bg-loom-wood-light text-white font-heading font-bold rounded-xl shadow-md transition-colors text-sm cursor-pointer"
                   >
-                    योजनाएं देखें (View Schemes)
+                    {isEn ? "View Schemes" : "योजनाएं देखें (View Schemes)"}
                   </button>
                 </CardContent>
               </Card>
@@ -587,28 +633,36 @@ export const WeaverDashboard: React.FC = () => {
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2.5 font-heading text-xl text-loom-wood">
                     <IndianRupee className="text-loom-gold w-5 h-5" />
-                    डिजिटल पासबुक संक्षेप (Passbook Summary)
+                    {isEn ? "Passbook Summary" : "डिजिटल पासबुक संक्षेप (Passbook Summary)"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="p-4 bg-loom-wood/5 rounded-2xl border border-loom-wood/10 text-center">
-                    <span className="text-sm text-loom-ink-light font-bold block">कुल बकाया राशि (Outstanding Balance)</span>
+                    <span className="text-sm text-loom-ink-light font-bold block">
+                      {isEn ? "Outstanding Balance" : "कुल बकाया राशि (Outstanding Balance)"}
+                    </span>
                     <span className={`font-heading text-3xl font-black block mt-1 ${currentBalance >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
-                      ₹{currentBalance.toLocaleString('hi-IN')}
+                      ₹{currentBalance.toLocaleString(isEn ? 'en-US' : 'hi-IN')}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 text-center text-xs font-semibold">
                     <div className="p-2 bg-emerald-50 text-emerald-800 rounded-lg border border-emerald-100">
-                      <span className="block text-[10px] text-emerald-600 uppercase font-bold">अर्जित</span>
+                      <span className="block text-[10px] text-emerald-600 uppercase font-bold">
+                        {isEn ? "Earned" : "अर्जित"}
+                      </span>
                       <span className="font-heading text-sm font-bold block mt-0.5">₹{totalWages}</span>
                     </div>
                     <div className="p-2 bg-amber-50 text-amber-800 rounded-lg border border-amber-100">
-                      <span className="block text-[10px] text-amber-600 uppercase font-bold">अग्रिम</span>
+                      <span className="block text-[10px] text-amber-600 uppercase font-bold">
+                        {isEn ? "Advance" : "अग्रिम"}
+                      </span>
                       <span className="font-heading text-sm font-bold block mt-0.5">₹{totalAdvances}</span>
                     </div>
                     <div className="p-2 bg-rose-50 text-rose-800 rounded-lg border border-rose-100">
-                      <span className="block text-[10px] text-rose-600 uppercase font-bold">कटौती</span>
+                      <span className="block text-[10px] text-rose-600 uppercase font-bold">
+                        {isEn ? "Deductions" : "कटौती"}
+                      </span>
                       <span className="font-heading text-sm font-bold block mt-0.5">₹{totalDeductions}</span>
                     </div>
                   </div>
@@ -617,7 +671,7 @@ export const WeaverDashboard: React.FC = () => {
                     onClick={() => setActiveTab('earnings')}
                     className="w-full py-3 bg-loom-wood hover:bg-loom-wood-light text-white font-heading font-bold rounded-xl shadow-md transition-colors text-sm cursor-pointer"
                   >
-                    पूरा डिजिटल पासबुक देखें (View Full Passbook)
+                    {isEn ? "View Full Passbook" : "पूरा डिजिटल पासबुक देखें (View Full Passbook)"}
                   </button>
                 </CardContent>
               </Card>
@@ -627,21 +681,27 @@ export const WeaverDashboard: React.FC = () => {
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2.5 font-heading text-xl text-loom-wood">
                     <Briefcase className="text-loom-gold w-5 h-5" />
-                    बैंक विवरण (Bank Details)
+                    {isEn ? "Bank Details" : "बैंक विवरण (Bank Details)"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 font-body text-base">
                   <div className="p-4 rounded-xl border border-loom-beige bg-loom-cream/40 space-y-3">
                     <div>
-                      <span className="text-xs text-loom-ink-light font-bold block">बैंक का नाम</span>
+                      <span className="text-xs text-loom-ink-light font-bold block">
+                        {isEn ? "Bank Name" : "बैंक का नाम"}
+                      </span>
                       <span className="font-heading text-lg font-bold text-loom-wood">{weaverProfile?.bankAccount?.bankName || 'State Bank of India'}</span>
                     </div>
                     <div>
-                      <span className="text-xs text-loom-ink-light font-bold block">खाता संख्या</span>
+                      <span className="text-xs text-loom-ink-light font-bold block">
+                        {isEn ? "Account Number" : "खाता संख्या"}
+                      </span>
                       <span className="font-heading text-lg font-bold text-loom-wood">{weaverProfile?.bankAccount?.accountNumber || '30123456789'}</span>
                     </div>
                     <div>
-                      <span className="text-xs text-loom-ink-light font-bold block">आईएफएससी (IFSC)</span>
+                      <span className="text-xs text-loom-ink-light font-bold block">
+                        {isEn ? "IFSC Code" : "आईएफएससी (IFSC)"}
+                      </span>
                       <span className="font-heading text-lg font-bold text-loom-wood">{weaverProfile?.bankAccount?.ifsc || 'SBIN0001234'}</span>
                     </div>
                   </div>
@@ -657,25 +717,33 @@ export const WeaverDashboard: React.FC = () => {
             <div className="mb-4">
               <h2 className="font-heading text-2xl font-bold text-loom-wood flex items-center gap-2">
                 <FileText className="w-6 h-6 text-loom-gold" />
-                मेरी कार्य सूची (My Job Cards)
+                {isEn ? "My Job Cards" : "मेरी कार्य सूची (My Job Cards)"}
               </h2>
               <p className="font-body text-sm text-loom-ink-light mt-1">
-                सचिव द्वारा आपको सौंपे गए डिजिटल कार्य कार्ड देखें, बुनाई शुरू करें और पूरा होने पर सचिव को भेजें।
+                {isEn 
+                  ? "View job cards assigned by the secretary, track weaving progress, and mark as completed."
+                  : "सचिव द्वारा आपको सौंपे गए डिजिटल कार्य कार्ड देखें, बुनाई शुरू करें और पूरा होने पर सचिव को भेजें।"}
               </p>
             </div>
 
             {loadingJobCards ? (
               <div className="py-12 flex flex-col items-center justify-center gap-2">
                 <div className="w-8 h-8 border-4 border-loom-gold border-t-transparent rounded-full animate-spin" />
-                <p className="font-heading text-loom-wood mt-2 animate-pulse text-sm">कार्य प्राप्त किए जा रहे हैं...</p>
+                <p className="font-heading text-loom-wood mt-2 animate-pulse text-sm">
+                  {isEn ? "Fetching assigned jobs..." : "कार्य प्राप्त किए जा रहे हैं..."}
+                </p>
               </div>
             ) : jobCards.length === 0 ? (
               <Card className="min-h-[300px] flex items-center justify-center text-center">
                 <CardContent className="max-w-md flex flex-col items-center justify-center p-8">
                   <span className="text-5xl block mb-4">📋</span>
-                  <h3 className="font-heading text-2xl font-bold text-loom-wood mb-2">कोई कार्य असाइन नहीं है</h3>
+                  <h3 className="font-heading text-2xl font-bold text-loom-wood mb-2">
+                    {isEn ? "No Jobs Assigned" : "कोई कार्य असाइन नहीं है"}
+                  </h3>
                   <p className="font-body text-base text-loom-ink/80">
-                    अभी तक सचिव द्वारा आपको कोई भी बुनाई कार्य नहीं सौंपा गया है।
+                    {isEn 
+                      ? "No weaving jobs have been assigned to you by the secretary yet."
+                      : "अभी तक सचिव द्वारा आपको कोई भी बुनाई कार्य नहीं सौंपा गया है।"}
                   </p>
                   <p className="font-body text-xs text-loom-ink-light mt-2">
                     (Your loom has no active assigned jobs at the moment.)
@@ -696,47 +764,65 @@ export const WeaverDashboard: React.FC = () => {
                           <div>
                             <h3 className="font-heading font-bold text-loom-wood text-lg">{card.title}</h3>
                             <span className="text-xs font-mono bg-loom-sand text-loom-wood px-2 py-0.5 rounded border border-loom-beige/50 mt-1 inline-block uppercase">
-                              डिजाइन: {card.designCode}
+                              {isEn ? `Design: ${card.designCode}` : `डिजाइन: ${card.designCode}`}
                             </span>
                           </div>
                           
                           {/* Custom local badge */}
                           {card.status === 'assigned' && (
-                            <span className="text-xs px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 border border-blue-200 font-bold">असाइन</span>
+                            <span className="text-xs px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 border border-blue-200 font-bold">
+                              {isEn ? "Assigned" : "असाइन"}
+                            </span>
                           )}
                           {card.status === 'in_progress' && (
-                            <span className="text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200 font-bold">प्रगति पर</span>
+                            <span className="text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200 font-bold">
+                              {isEn ? "In Progress" : "प्रगति पर"}
+                            </span>
                           )}
                           {card.status === 'completed' && (
-                            <span className="text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-800 border border-green-200 font-bold">पूर्ण (समीक्षाधीन)</span>
+                            <span className="text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-800 border border-green-200 font-bold">
+                              {isEn ? "Completed (Under Review)" : "पूर्ण (समीक्षाधीन)"}
+                            </span>
                           )}
                           {card.status === 'qc_passed' && (
-                            <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-700 text-white border border-emerald-800 font-bold">QC पास ✓</span>
+                            <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-700 text-white border border-emerald-800 font-bold">
+                              {isEn ? "QC Passed ✓" : "QC पास ✓"}
+                            </span>
                           )}
                           {card.status === 'qc_rejected' && (
-                            <span className="text-xs px-2.5 py-1 rounded-full bg-red-100 text-red-800 border border-red-200 font-bold">QC असफल ❌</span>
+                            <span className="text-xs px-2.5 py-1 rounded-full bg-red-100 text-red-800 border border-red-200 font-bold">
+                              {isEn ? "QC Failed ❌" : "QC असफल ❌"}
+                            </span>
                           )}
                         </div>
 
                         {/* Quantity & wage */}
                         <div className="grid grid-cols-2 gap-2 my-4 p-2.5 bg-loom-sand/20 rounded-lg border border-loom-beige/50 text-xs font-body text-loom-ink/80">
                           <div>
-                            <span className="block text-[10px] font-heading font-bold text-loom-wood">कुल मात्रा</span>
-                            <span className="font-bold text-sm text-loom-ink">{card.quantity} पीस</span>
+                            <span className="block text-[10px] font-heading font-bold text-loom-wood">
+                              {isEn ? "Total Quantity" : "कुल मात्रा"}
+                            </span>
+                            <span className="font-bold text-sm text-loom-ink">
+                              {card.quantity} {isEn ? "pcs" : "पीस"}
+                            </span>
                           </div>
                           <div>
-                            <span className="block text-[10px] font-heading font-bold text-loom-wood">मजदूरी / पीस</span>
+                            <span className="block text-[10px] font-heading font-bold text-loom-wood">
+                              {isEn ? "Wage / Piece" : "मजदूरी / पीस"}
+                            </span>
                             <span className="font-bold text-sm text-loom-ink">₹ {card.wagePerPiece}</span>
                           </div>
                         </div>
 
                         {/* Raw materials list */}
                         <div className="mb-4">
-                          <span className="block text-xs font-heading font-bold text-loom-wood mb-1.5">जारी कच्चा माल (Issued Stock):</span>
+                          <span className="block text-xs font-heading font-bold text-loom-wood mb-1.5">
+                            {isEn ? "Issued Raw Materials:" : "जारी कच्चा माल (Issued Stock):"}
+                          </span>
                           <div className="flex flex-wrap gap-1.5">
                             {card.rawMaterialsIssued.map((m, idx) => (
                               <span key={idx} className="text-[11px] font-body bg-white border border-loom-beige text-loom-ink px-2 py-1 rounded-lg">
-                                {m.materialName}: {m.quantity} {m.unit}
+                                {getDisplayMaterialName(m.materialName)}: {m.quantity} {getDisplayUnit(m.unit)}
                               </span>
                             ))}
                           </div>
@@ -745,14 +831,18 @@ export const WeaverDashboard: React.FC = () => {
                         {/* Deadline */}
                         <div className="flex items-center gap-1.5 text-xs text-loom-ink/70 font-body mb-4">
                           <Calendar className="w-3.5 h-3.5 text-loom-gold shrink-0" />
-                          <span>अंतिम तिथि: <strong>{new Date(card.deadline).toLocaleDateString('hi-IN', { month: 'short', day: 'numeric', year: 'numeric' })}</strong></span>
+                          <span>
+                            {isEn ? "Deadline:" : "अंतिम तिथि:"} <strong>{new Date(card.deadline).toLocaleDateString(isEn ? 'en-US' : 'hi-IN', { month: 'short', day: 'numeric', year: 'numeric' })}</strong>
+                          </span>
                         </div>
 
                         {/* QC Remarks if rejected */}
                         {card.status === 'qc_rejected' && (
                           <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs font-body text-red-700 mb-4 space-y-1.5">
-                            <p className="font-semibold">⚠️ गुणवत्ता विफलता का विवरण:</p>
-                            <p className="italic">"{card.qcRemarks || 'त्रुटि पाई गई। कृपया सचिव से संपर्क करें।'}"</p>
+                            <p className="font-semibold">
+                              {isEn ? "⚠️ Quality Inspection Failure Details:" : "⚠️ गुणवत्ता विफलता का विवरण:"}
+                            </p>
+                            <p className="italic">"{card.qcRemarks || (isEn ? "Defects identified. Please contact the Secretary." : 'त्रुटि पाई गई। कृपया सचिव से संपर्क करें।')}"</p>
                             {card.qcPhotoURL && (
                               <img 
                                 src={card.qcPhotoURL} 
@@ -770,38 +860,38 @@ export const WeaverDashboard: React.FC = () => {
                         {card.status === 'assigned' && (
                           <button
                             type="button"
-                            onClick={() => handleStatusUpdate(card.jobCardId, 'in_progress', 'बुनकर ने करघे पर कार्य प्रारंभ किया।')}
+                            onClick={() => handleStatusUpdate(card.jobCardId, 'in_progress', isEn ? 'Weaver started the work on the loom.' : 'बुनकर ने करघे पर कार्य प्रारंभ किया।')}
                             className="w-full bg-loom-wood hover:bg-loom-wood-light text-white font-heading font-bold py-2 rounded-xl text-sm shadow-sm transition-all cursor-pointer text-center"
                           >
-                            बुनाई कार्य शुरू करें (Start Weaving)
+                            {isEn ? "Start Weaving" : "बुनाई कार्य शुरू करें (Start Weaving)"}
                           </button>
                         )}
                         {card.status === 'in_progress' && (
                           <button
                             type="button"
-                            onClick={() => handleStatusUpdate(card.jobCardId, 'completed', 'बुनकर ने बुनाई कार्य पूर्ण किया। सचिव गुणवत्ता समीक्षा हेतु तत्पर है।')}
+                            onClick={() => handleStatusUpdate(card.jobCardId, 'completed', isEn ? 'Weaver completed the weaving. Awaiting quality review.' : 'बुनकर ने बुनाई कार्य पूर्ण किया। सचिव गुणवत्ता समीक्षा हेतु तत्पर है।')}
                             className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-heading font-bold py-2 rounded-xl text-sm shadow-sm transition-all cursor-pointer text-center"
                           >
-                            कार्य पूर्ण चिह्नित करें (Mark Completed)
+                            {isEn ? "Mark Completed" : "कार्य पूर्ण चिह्नित करें (Mark Completed)"}
                           </button>
                         )}
                         {card.status === 'qc_rejected' && (
                           <button
                             type="button"
-                            onClick={() => handleStatusUpdate(card.jobCardId, 'in_progress', 'बुनकर ने विफलता विवरण के अनुसार सुधार कार्य शुरू किया।')}
+                            onClick={() => handleStatusUpdate(card.jobCardId, 'in_progress', isEn ? 'Weaver restarted the corrections based on QC feedback.' : 'बुनकर ने विफलता विवरण के अनुसार सुधार कार्य शुरू किया।')}
                             className="w-full bg-loom-wood hover:bg-loom-wood-light text-white font-heading font-bold py-2 rounded-xl text-sm shadow-sm transition-all cursor-pointer text-center"
                           >
-                            सुधार कार्य शुरू करें (Restart/Fix)
+                            {isEn ? "Restart / Fix" : "सुधार कार्य शुरू करें (Restart/Fix)"}
                           </button>
                         )}
                         {card.status === 'completed' && (
                           <p className="text-center text-xs text-amber-600 font-heading font-bold bg-amber-50 py-1.5 rounded-lg border border-amber-100">
-                            ⏳ गुणवत्ता समीक्षा (QC Inspection) की प्रतीक्षा है...
+                            {isEn ? "⏳ Awaiting QC Inspection..." : "⏳ गुणवत्ता समीक्षा (QC Inspection) की प्रतीक्षा है..."}
                           </p>
                         )}
                         {card.status === 'qc_passed' && (
                           <p className="text-center text-xs text-emerald-700 font-heading font-bold bg-emerald-50 py-1.5 rounded-lg border border-emerald-100 flex items-center justify-center gap-1">
-                            ✓ कार्य स्वीकृत एवं भुगतान के लिए सफल!
+                            {isEn ? "✓ Job approved and cleared for payment!" : "✓ कार्य स्वीकृत एवं भुगतान के लिए सफल!"}
                           </p>
                         )}
                       </div>
@@ -819,23 +909,27 @@ export const WeaverDashboard: React.FC = () => {
             <div className="mb-4">
               <h2 className="font-heading text-2xl font-bold text-loom-wood flex items-center gap-2">
                 <Bell className="w-6 h-6 text-loom-gold" />
-                सहकारी सूचनाएं (Latest Cooperative Notices)
+                {isEn ? "Latest Cooperative Notices" : "सहकारी सूचनाएं (Latest Cooperative Notices)"}
               </h2>
               <p className="font-body text-sm text-loom-ink-light mt-1">
-                सचिव द्वारा जारी की गई ताज़ा 5 सूचनाएँ यहाँ देखें।
+                {isEn ? "Review the latest notices published by the cooperative secretary." : "सचिव द्वारा जारी की गई ताज़ा 5 सूचनाएँ यहाँ देखें।"}
               </p>
             </div>
 
             {loadingNotices ? (
               <div className="flex justify-center items-center py-12">
-                <p className="font-heading text-lg text-loom-wood animate-pulse">सूचनाएं लोड हो रही हैं...</p>
+                <p className="font-heading text-lg text-loom-wood animate-pulse">
+                  {isEn ? "Loading notices..." : "सूचनाएं लोड हो रही हैं..."}
+                </p>
               </div>
             ) : notices.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center px-4 vintage-card bg-loom-cream">
                 <Bell className="w-16 h-16 text-loom-beige mb-4" />
-                <h3 className="font-heading text-xl font-bold text-loom-wood">कोई सक्रिय सूचना नहीं</h3>
+                <h3 className="font-heading text-xl font-bold text-loom-wood">
+                  {isEn ? "No Active Notices" : "कोई सक्रिय सूचना नहीं"}
+                </h3>
                 <p className="font-body text-base text-loom-ink-light max-w-sm mt-1">
-                  वर्तमान में समिति द्वारा कोई सार्वजनिक नोटिस जारी नहीं किया गया है।
+                  {isEn ? "There are no notices issued by the cooperative at this time." : "वर्तमान में समिति द्वारा कोई सार्वजनिक नोटिस जारी नहीं किया गया है।"}
                 </p>
               </div>
             ) : (
@@ -859,52 +953,74 @@ export const WeaverDashboard: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="border-l-4 border-l-loom-gold bg-loom-cream">
                 <CardContent className="p-6">
-                  <span className="text-sm font-semibold text-loom-ink-light block">स्वीकृत कुल कमाई (Approved Earnings)</span>
-                  <span className="font-heading text-3xl font-bold text-loom-wood block mt-1">₹ {totalEarned.toLocaleString('hi-IN')}.00</span>
-                  <span className="text-xs text-loom-gold block mt-2 font-medium">खाता विवरण स्वीकृत और सुरक्षित है</span>
+                  <span className="text-sm font-semibold text-loom-ink-light block">
+                    {isEn ? "Approved Earnings" : "स्वीकृत कुल कमाई (Approved Earnings)"}
+                  </span>
+                  <span className="font-heading text-3xl font-bold text-loom-wood block mt-1">
+                    ₹ {totalEarned.toLocaleString(isEn ? 'en-US' : 'hi-IN')}.00
+                  </span>
+                  <span className="text-xs text-loom-gold block mt-2 font-medium">
+                    {isEn ? "Verified and secured" : "खाता विवरण स्वीकृत और सुरक्षित है"}
+                  </span>
                 </CardContent>
               </Card>
 
               <Card className="border-l-4 border-l-loom-wood bg-loom-cream">
                 <CardContent className="p-6">
-                  <span className="text-sm font-semibold text-loom-ink-light block">समीक्षाधीन कार्य (Pending QC)</span>
-                  <span className="font-heading text-3xl font-bold text-loom-wood block mt-1">{pendingJobsCount} कार्य (Jobs)</span>
-                  <span className="text-xs text-loom-ink-light block mt-2">गुणवत्ता जांच के बाद भुगतान स्वीकृत होगा</span>
+                  <span className="text-sm font-semibold text-loom-ink-light block">
+                    {isEn ? "Pending QC" : "समीक्षाधीन कार्य (Pending QC)"}
+                  </span>
+                  <span className="font-heading text-3xl font-bold text-loom-wood block mt-1">
+                    {isEn ? `${pendingJobsCount} Jobs` : `${pendingJobsCount} कार्य (Jobs)`}
+                  </span>
+                  <span className="text-xs text-loom-ink-light block mt-2">
+                    {isEn ? "Wages will clear post inspection" : "गुणवत्ता जांच के बाद भुगतान स्वीकृत होगा"}
+                  </span>
                 </CardContent>
               </Card>
 
               <Card className="border-l-4 border-l-loom-beige bg-loom-cream">
                 <CardContent className="p-6">
-                  <span className="text-sm font-semibold text-loom-ink-light block">कुल स्वीकृत बुनाई (Weaving Output)</span>
-                  <span className="font-heading text-3xl font-bold text-loom-wood block mt-1">{totalPieces} थान/पीस</span>
-                  <span className="text-xs text-loom-ink-light block mt-2">सफलतापूर्वक पास हुए पीस</span>
+                  <span className="text-sm font-semibold text-loom-ink-light block">
+                    {isEn ? "Total Weaving Output" : "कुल स्वीकृत बुनाई (Weaving Output)"}
+                  </span>
+                  <span className="font-heading text-3xl font-bold text-loom-wood block mt-1">
+                    {totalPieces} {isEn ? "pieces" : "थान/पीस"}
+                  </span>
+                  <span className="text-xs text-loom-ink-light block mt-2">
+                    {isEn ? "Successfully approved pieces" : "सफलतापूर्वक पास हुए पीस"}
+                  </span>
                 </CardContent>
               </Card>
             </div>
 
             {/* Approved job earnings list */}
             <div>
-              <h3 className="font-heading text-xl font-bold text-loom-wood mb-4">स्वीकृत भुगतान बहीखाता (Wages Ledger History)</h3>
+              <h3 className="font-heading text-xl font-bold text-loom-wood mb-4">
+                {isEn ? "Wages Ledger History" : "स्वीकृत भुगतान बहीखाता (Wages Ledger History)"}
+              </h3>
               
               <Card>
                 <CardContent className="p-0 overflow-x-auto">
                   {qcPassedJobs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-center px-4">
                       <TrendingUp className="w-16 h-16 text-loom-beige mb-4 stroke-[1.5]" />
-                      <h4 className="font-heading text-lg font-bold text-loom-wood mb-1">कोई स्वीकृत भुगतान इतिहास नहीं</h4>
+                      <h4 className="font-heading text-lg font-bold text-loom-wood mb-1">
+                        {isEn ? "No Payment History" : "कोई स्वीकृत भुगतान इतिहास नहीं"}
+                      </h4>
                       <p className="font-body text-sm text-loom-ink-light">
-                        वर्तमान में गुणवत्ता जांच द्वारा स्वीकृत कोई भुगतान कार्य उपलब्ध नहीं है।
+                        {isEn ? "No approved job payments are available in your history." : "वर्तमान में गुणवत्ता जांच द्वारा स्वीकृत कोई भुगतान कार्य उपलब्ध नहीं है।"}
                       </p>
                     </div>
                   ) : (
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>कार्य शीर्षक (Job Card)</TableHead>
-                          <TableHead>डिजाइन कोड</TableHead>
-                          <TableHead className="text-center">मात्रा</TableHead>
-                          <TableHead className="text-right font-body">मजदूरी दर</TableHead>
-                          <TableHead className="text-right font-body">कुल कमाई</TableHead>
+                          <TableHead>{isEn ? "Job Card Title" : "कार्य शीर्षक (Job Card)"}</TableHead>
+                          <TableHead>{isEn ? "Design Code" : "डिजाइन कोड"}</TableHead>
+                          <TableHead className="text-center">{isEn ? "Quantity" : "मात्रा"}</TableHead>
+                          <TableHead className="text-right font-body">{isEn ? "Wage Rate" : "मजदूरी दर"}</TableHead>
+                          <TableHead className="text-right font-body">{isEn ? "Total Earnings" : "कुल कमाई"}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -917,13 +1033,13 @@ export const WeaverDashboard: React.FC = () => {
                               {c.designCode}
                             </TableCell>
                             <TableCell className="font-body text-center font-bold text-sm text-loom-ink">
-                              {c.quantity} पीस
+                              {c.quantity} {isEn ? "pcs" : "पीस"}
                             </TableCell>
                             <TableCell className="font-body text-right text-loom-ink/80 text-sm">
                               ₹ {c.wagePerPiece}
                             </TableCell>
                             <TableCell className="font-body text-right font-bold text-emerald-800 text-base">
-                              ₹ {(c.totalWage || (c.quantity * c.wagePerPiece)).toLocaleString('hi-IN')}.00
+                              ₹ {(c.totalWage || (c.quantity * c.wagePerPiece)).toLocaleString(isEn ? 'en-US' : 'hi-IN')}.00
                             </TableCell>
                           </TableRow>
                         ))}
@@ -944,10 +1060,12 @@ export const WeaverDashboard: React.FC = () => {
               <div>
                 <h2 className="font-heading text-2xl font-bold text-loom-wood flex items-center gap-2">
                   <MessageSquare className="w-6 h-6 text-loom-gold" />
-                  शिकायत एवं सुझाव निवारण (My Grievances)
+                  {isEn ? "Grievances & Assistance Tickets" : "शिकायत एवं सुझाव निवारण (My Grievances)"}
                 </h2>
                 <p className="font-body text-sm text-loom-ink-light mt-1">
-                  सहकारी सचिव से किसी भी प्रकार की सहायता, भुगतान अथवा कच्चे माल की शिकायत यहाँ दर्ज करें।
+                  {isEn 
+                    ? "File assistance tickets to the secretary regarding payments, raw materials, or support."
+                    : "सहकारी सचिव से किसी भी प्रकार की सहायता, भुगतान अथवा कच्चे माल की शिकायत यहाँ दर्ज करें।"}
                 </p>
               </div>
               <Button
@@ -956,7 +1074,7 @@ export const WeaverDashboard: React.FC = () => {
                 className="flex items-center gap-2 px-6 py-3 bg-loom-wood text-white hover:bg-loom-wood-light font-heading font-bold rounded-xl shadow-md transition-all shrink-0 cursor-pointer"
               >
                 <PlusCircle className="w-5 h-5" />
-                शिकायत दर्ज करें (File Grievance)
+                {isEn ? "File Grievance" : "शिकायत दर्ज करें (File Grievance)"}
               </Button>
             </div>
 
@@ -965,25 +1083,31 @@ export const WeaverDashboard: React.FC = () => {
               <CardContent className="p-0 overflow-x-auto">
                 {loadingGrievances ? (
                   <div className="flex justify-center items-center py-12">
-                    <p className="font-heading text-lg text-loom-wood animate-pulse">आपकी शिकायतें लोड हो रही हैं...</p>
+                    <p className="font-heading text-lg text-loom-wood animate-pulse">
+                      {isEn ? "Loading grievances..." : "आपकी शिकायतें लोड हो रही हैं..."}
+                    </p>
                   </div>
                 ) : grievances.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-center px-4">
                     <MessageSquare className="w-16 h-16 text-loom-beige mb-4" />
-                    <h3 className="font-heading text-xl font-bold text-loom-wood">कोई शिकायत दर्ज नहीं है</h3>
+                    <h3 className="font-heading text-xl font-bold text-loom-wood">
+                      {isEn ? "No Grievances Logged" : "कोई शिकायत दर्ज नहीं है"}
+                    </h3>
                     <p className="font-body text-base text-loom-ink-light max-w-sm mt-1">
-                      आपने अभी तक कोई शिकायत दर्ज नहीं कराई है। नया टिकट खोलने के लिए ऊपर दिए गए बटन का उपयोग करें।
+                      {isEn 
+                        ? "You have not submitted any grievance tickets yet. Use the button to create a new ticket."
+                        : "आपने अभी तक कोई शिकायत दर्ज नहीं कराई है। नया टिकट खोलने के लिए ऊपर दिए गए बटन का उपयोग करें।"}
                     </p>
                   </div>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>विषय (Subject)</TableHead>
-                        <TableHead>श्रेणी (Category)</TableHead>
-                        <TableHead>स्थिति (Status)</TableHead>
-                        <TableHead>दिनांक (Date)</TableHead>
-                        <TableHead className="text-right">कार्रवाई (Action)</TableHead>
+                        <TableHead>{isEn ? "Subject" : "विषय (Subject)"}</TableHead>
+                        <TableHead>{isEn ? "Category" : "श्रेणी (Category)"}</TableHead>
+                        <TableHead>{isEn ? "Status" : "स्थिति (Status)"}</TableHead>
+                        <TableHead>{isEn ? "Date" : "दिनांक (Date)"}</TableHead>
+                        <TableHead className="text-right">{isEn ? "Action" : "कार्रवाई (Action)"}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1011,7 +1135,7 @@ export const WeaverDashboard: React.FC = () => {
                               onClick={() => navigate(`/weaver/grievances/${g.grievanceId}`)}
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-loom-wood text-white hover:bg-loom-wood-light text-xs font-heading font-bold rounded-lg transition-all cursor-pointer shadow-sm"
                             >
-                              चर्चा देखें (View thread) <ChevronRight className="w-3.5 h-3.5" />
+                              {isEn ? "View discussion" : "चर्चा देखें (View thread)"} <ChevronRight className="w-3.5 h-3.5" />
                             </button>
                           </TableCell>
                         </TableRow>
@@ -1035,7 +1159,7 @@ export const WeaverDashboard: React.FC = () => {
                   </button>
 
                   <h2 className="font-heading text-2xl font-bold text-loom-wood mb-2">
-                    नयी शिकायत दर्ज करें
+                    {isEn ? "File New Grievance Ticket" : "नयी शिकायत दर्ज करें"}
                   </h2>
                   <p className="font-body text-sm text-loom-ink-light mb-6 border-b border-loom-beige/30 pb-3">
                     (File a new assistance/grievance ticket to cooperative committee)
@@ -1051,11 +1175,11 @@ export const WeaverDashboard: React.FC = () => {
                     {/* Subject */}
                     <div>
                       <label htmlFor="g-subject" className="block text-sm font-bold text-loom-wood mb-1.5 font-heading">
-                        शिकायत का मुख्य विषय (Grievance Subject) *
+                        {isEn ? "Grievance Subject *" : "शिकायत का मुख्य विषय (Grievance Subject) *"}
                       </label>
                       <Input
                         id="g-subject"
-                        placeholder="उदा: जून महीने का भुगतान शेष है"
+                        placeholder={isEn ? "e.g., June payment is outstanding" : "उदा: जून महीने का भुगतान शेष है"}
                         value={gSubject}
                         onChange={(e) => setGSubject(e.target.value)}
                       />
@@ -1064,7 +1188,7 @@ export const WeaverDashboard: React.FC = () => {
                     {/* Category */}
                     <div>
                       <label htmlFor="g-category" className="block text-sm font-bold text-loom-wood mb-1.5 font-heading">
-                        शिकायत की श्रेणी (Select Category)
+                        {isEn ? "Select Category" : "शिकायत की श्रेणी (Select Category)"}
                       </label>
                       <select
                         id="g-category"
@@ -1072,21 +1196,21 @@ export const WeaverDashboard: React.FC = () => {
                         onChange={(e) => setGCategory(e.target.value as any)}
                         className="w-full px-4 py-3 bg-white border border-loom-beige rounded-xl focus:outline-none focus:ring-2 focus:ring-loom-gold focus:border-transparent font-body text-base text-loom-ink shadow-inner"
                       >
-                        <option value="payment">भुगतान संबंधी (Payment)</option>
-                        <option value="raw material">कच्चा माल संबंधी (Raw Material)</option>
-                        <option value="other">अन्य विषय (Other)</option>
+                        <option value="payment">{isEn ? "Payment Related" : "भुगतान संबंधी (Payment)"}</option>
+                        <option value="raw material">{isEn ? "Raw Material Related" : "कच्चा माल संबंधी (Raw Material)"}</option>
+                        <option value="other">{isEn ? "Other Issues" : "अन्य विषय (Other)"}</option>
                       </select>
                     </div>
 
                     {/* Description */}
                     <div>
                       <label htmlFor="g-description" className="block text-sm font-bold text-loom-wood mb-1.5 font-heading">
-                        विस्तृत विवरण (Detailed Description of Issue) *
+                        {isEn ? "Detailed Description *" : "विस्तृत विवरण (Detailed Description of Issue) *"}
                       </label>
                       <textarea
                         id="g-description"
                         rows={4}
-                        placeholder="अपनी समस्या का पूरा विवरण यहाँ लिखें, ताकि सचिव उस पर तुरंत संज्ञान ले सकें..."
+                        placeholder={isEn ? "Provide full details of your issue to help the Secretary resolve it quickly..." : "अपनी समस्या का पूरा विवरण यहाँ लिखें, ताकि सचिव उस पर तुरंत संज्ञान ले सकें..."}
                         value={gDescription}
                         onChange={(e) => setGDescription(e.target.value)}
                         className="w-full px-4 py-3 bg-white border border-loom-beige rounded-xl focus:outline-none focus:ring-2 focus:ring-loom-gold focus:border-transparent font-body text-base placeholder-loom-beige text-loom-ink shadow-inner resize-none"
@@ -1102,14 +1226,14 @@ export const WeaverDashboard: React.FC = () => {
                         disabled={submittingGrievance}
                         className="flex-1 font-heading font-bold py-3.5"
                       >
-                        रद्द करें (Cancel)
+                        {isEn ? "Cancel" : "रद्द करें (Cancel)"}
                       </Button>
                       <Button
                         type="submit"
                         disabled={submittingGrievance}
                         className="flex-1 font-heading font-bold py-3.5 bg-loom-wood text-white hover:bg-loom-wood-light"
                       >
-                        {submittingGrievance ? 'दर्ज किया जा रहा है...' : 'दर्ज करें (Submit Ticket)'}
+                        {submittingGrievance ? (isEn ? "Submitting..." : 'दर्ज किया जा रहा है...') : (isEn ? "Submit Ticket" : 'दर्ज करें (Submit Ticket)')}
                       </Button>
                     </div>
                   </form>
@@ -1127,10 +1251,12 @@ export const WeaverDashboard: React.FC = () => {
               <div>
                 <h2 className="font-heading text-2xl font-bold text-loom-wood flex items-center gap-2">
                   <Layers className="w-6 h-6 text-loom-gold" />
-                  कच्चे माल की मांग/अनुरोध (Raw Material Requests)
+                  {isEn ? "Raw Material Requests" : "कच्चे माल की मांग/अनुरोध (Raw Material Requests)"}
                 </h2>
                 <p className="font-body text-sm text-loom-ink-light mt-1">
-                  उत्पादन शुरू करने के लिए आवश्यक धागे, जरी या रंगों की मांग समिति को भेजें।
+                  {isEn 
+                    ? "Request threads, dyes, or zari threads from the cooperative to start production."
+                    : "उत्पादन शुरू करने के लिए आवश्यक धागे, जरी या रंगों की मांग समिति को भेजें।"}
                 </p>
               </div>
               <button
@@ -1139,7 +1265,7 @@ export const WeaverDashboard: React.FC = () => {
                 className="vintage-button flex items-center gap-2 px-6 py-3 bg-loom-wood text-white hover:bg-loom-wood-light font-heading font-bold rounded-xl shadow-md transition-all shrink-0 cursor-pointer text-sm"
               >
                 <PlusCircle className="w-5 h-5" />
-                नया अनुरोध भेजें (Request Material)
+                {isEn ? "Request Material" : "नया अनुरोध भेजें (Request Material)"}
               </button>
             </div>
 
@@ -1148,35 +1274,39 @@ export const WeaverDashboard: React.FC = () => {
               <CardContent className="p-0 overflow-x-auto">
                 {loadingRequests ? (
                   <div className="flex justify-center items-center py-12">
-                    <p className="font-heading text-lg text-loom-wood animate-pulse">आपके अनुरोध लोड हो रहे हैं...</p>
+                    <p className="font-heading text-lg text-loom-wood animate-pulse">
+                      {isEn ? "Loading material requests..." : "आपके अनुरोध लोड हो रहे हैं..."}
+                    </p>
                   </div>
                 ) : materialRequests.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-center px-4">
                     <Layers className="w-16 h-16 text-loom-beige mb-4 stroke-[1.5]" />
-                    <h3 className="font-heading text-xl font-bold text-loom-wood">कोई अनुरोध दर्ज नहीं है</h3>
+                    <h3 className="font-heading text-xl font-bold text-loom-wood">
+                      {isEn ? "No Requests Found" : "कोई अनुरोध दर्ज नहीं है"}
+                    </h3>
                     <p className="font-body text-base text-loom-ink-light max-w-sm mt-1">
-                      आपने अभी तक कच्चे माल के लिए कोई अनुरोध नहीं किया है। नया अनुरोध जोड़ने के लिए ऊपर दिए गए बटन का उपयोग करें।
+                      {isEn ? "You have not submitted any raw material requests yet. Use the button to request material." : "आपने अभी तक कच्चे माल के लिए कोई अनुरोध नहीं किया है। नया अनुरोध जोड़ने के लिए ऊपर दिए गए बटन का उपयोग करें।"}
                     </p>
                   </div>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>सामग्री का नाम</TableHead>
-                        <TableHead className="text-right">मात्रा</TableHead>
-                        <TableHead>आवश्यकता तिथि</TableHead>
-                        <TableHead>अनुरोध दिनांक</TableHead>
-                        <TableHead className="text-center">स्थिति (Status)</TableHead>
+                        <TableHead>{isEn ? "Material Name" : "सामग्री का नाम"}</TableHead>
+                        <TableHead className="text-right">{isEn ? "Quantity" : "मात्रा"}</TableHead>
+                        <TableHead>{isEn ? "Required By Date" : "आवश्यकता तिथि"}</TableHead>
+                        <TableHead>{isEn ? "Requested Date" : "अनुरोध दिनांक"}</TableHead>
+                        <TableHead className="text-center">{isEn ? "Status" : "स्थिति (Status)"}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {materialRequests.map((req) => (
                         <TableRow key={req.requestId} className="hover:bg-loom-cream/40 transition-colors">
                           <TableCell className="font-heading font-bold text-base text-loom-wood">
-                            {req.materialName}
+                            {getDisplayMaterialName(req.materialName)}
                           </TableCell>
                           <TableCell className="font-body text-right font-bold text-sm text-loom-ink">
-                            {req.quantity} {req.unit}
+                            {req.quantity} {getDisplayUnit(req.unit)}
                           </TableCell>
                           <TableCell className="font-mono text-xs text-loom-ink-light">
                             {formatDate(req.requiredByDate)}
@@ -1187,17 +1317,17 @@ export const WeaverDashboard: React.FC = () => {
                           <TableCell className="text-center">
                             {req.status === 'pending' && (
                               <span className="px-3 py-1 text-xs rounded-full bg-red-100 text-red-800 border border-red-200 font-bold">
-                                ⏳ लंबित (Pending)
+                                {isEn ? "⏳ Pending" : "⏳ लंबित (Pending)"}
                               </span>
                             )}
                             {req.status === 'consolidated' && (
                               <span className="px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-800 border border-blue-200 font-bold">
-                                📦 समेकित (Consolidated)
+                                {isEn ? "📦 Consolidated" : "📦 समेकित (Consolidated)"}
                               </span>
                             )}
                             {req.status === 'fulfilled' && (
                               <span className="px-3 py-1 text-xs rounded-full bg-green-100 text-green-800 border border-green-200 font-bold">
-                                ✓ प्राप्त/वितरित (Fulfilled)
+                                {isEn ? "✓ Delivered" : "✓ प्राप्त/वितरित (Fulfilled)"}
                               </span>
                             )}
                           </TableCell>
@@ -1222,7 +1352,7 @@ export const WeaverDashboard: React.FC = () => {
                   </button>
 
                   <h2 className="font-heading text-2xl font-bold text-loom-wood mb-2">
-                    नया कच्चा माल अनुरोध दर्ज करें
+                    {isEn ? "Request Raw Materials" : "नया कच्चा माल अनुरोध दर्ज करें"}
                   </h2>
                   <p className="font-body text-sm text-loom-ink-light mb-6 border-b border-loom-beige/30 pb-3">
                     (Request raw materials from the cooperative's inventory)
@@ -1238,7 +1368,7 @@ export const WeaverDashboard: React.FC = () => {
                     {/* Material Selection */}
                     <div>
                       <label htmlFor="req-material" className="block text-sm font-bold text-loom-wood mb-1.5 font-heading">
-                        कच्ची सामग्री का प्रकार (Select Raw Material) *
+                        {isEn ? "Select Raw Material *" : "कच्ची सामग्री का प्रकार (Select Raw Material) *"}
                       </label>
                       <select
                         id="req-material"
@@ -1246,10 +1376,10 @@ export const WeaverDashboard: React.FC = () => {
                         onChange={(e) => setReqMaterialName(e.target.value)}
                         className="w-full px-4 py-3 bg-white border border-loom-beige rounded-xl focus:outline-none focus:ring-2 focus:ring-loom-gold focus:border-transparent font-body text-base text-loom-ink shadow-inner"
                       >
-                        <option value="सूती धागा">सूती धागा (Cotton Yarn)</option>
-                        <option value="रेसम धागा">रेसम धागा (Silk Yarn)</option>
-                        <option value="जरी">जरी (Zari Thread)</option>
-                        <option value="रंगाई सामग्री">रंगाई सामग्री (Dyeing Colors)</option>
+                        <option value="सूती धागा">{isEn ? "Cotton Yarn" : "सूती धागा (Cotton Yarn)"}</option>
+                        <option value="रेसम धागा">{isEn ? "Silk Yarn" : "रेसम धागा (Silk Yarn)"}</option>
+                        <option value="जरी">{isEn ? "Zari Thread" : "जरी (Zari Thread)"}</option>
+                        <option value="रंगाई सामग्री">{isEn ? "Dyeing Colors" : "रंगाई सामग्री (Dyeing Colors)"}</option>
                       </select>
                     </div>
 
@@ -1257,7 +1387,9 @@ export const WeaverDashboard: React.FC = () => {
                       {/* Quantity */}
                       <div>
                         <label htmlFor="req-qty" className="block text-sm font-bold text-loom-wood mb-1.5 font-heading">
-                          आवश्यक मात्रा ({reqMaterialName === 'रंगाई सामग्री' ? 'लीटर' : 'किलोग्राम'}) *
+                          {isEn 
+                            ? `Required Quantity (${reqMaterialName === 'रंगाई सामग्री' ? 'Litre' : 'kg'}) *`
+                            : `आवश्यक मात्रा (${reqMaterialName === 'रंगाई सामग्री' ? 'लीटर' : 'किलोग्राम'}) *`}
                         </label>
                         <div className="relative">
                           <Input
@@ -1265,12 +1397,12 @@ export const WeaverDashboard: React.FC = () => {
                             type="number"
                             min="1"
                             step="0.1"
-                            placeholder="जैसे: 15"
+                            placeholder={isEn ? "e.g. 15" : "जैसे: 15"}
                             value={reqQuantity}
                             onChange={(e) => setReqQuantity(e.target.value)}
                           />
                           <span className="absolute right-3 top-3.5 text-xs font-semibold text-loom-ink-light">
-                            {reqMaterialName === 'रंगाई सामग्री' ? 'लीटर' : 'किलोग्राम'}
+                            {reqMaterialName === 'रंगाई सामग्री' ? (isEn ? 'Litre' : 'लीटर') : (isEn ? 'kg' : 'किलोग्राम')}
                           </span>
                         </div>
                       </div>
@@ -1278,7 +1410,7 @@ export const WeaverDashboard: React.FC = () => {
                       {/* Required By Date */}
                       <div>
                         <label htmlFor="req-date" className="block text-sm font-bold text-loom-wood mb-1.5 font-heading">
-                          आवश्यकता की तिथि (Required By) *
+                          {isEn ? "Required By Date *" : "आवश्यकता की तिथि (Required By) *"}
                         </label>
                         <Input
                           id="req-date"
@@ -1296,16 +1428,16 @@ export const WeaverDashboard: React.FC = () => {
                         type="button"
                         onClick={() => setShowRequestModal(false)}
                         disabled={submittingRequest}
-                        className="flex-1 font-heading font-bold py-3.5 border border-loom-beige rounded-xl hover:bg-loom-sand/20 transition-all text-sm text-loom-wood"
+                        className="flex-1 font-heading font-bold py-3.5 border border-loom-beige rounded-xl hover:bg-loom-sand/20 transition-all text-sm text-loom-wood cursor-pointer"
                       >
-                        रद्द करें (Cancel)
+                        {isEn ? "Cancel" : "रद्द करें (Cancel)"}
                       </button>
                       <button
                         type="submit"
                         disabled={submittingRequest}
                         className="vintage-button flex-1 font-heading font-bold py-3.5 bg-loom-wood text-white hover:bg-loom-wood-light text-sm"
                       >
-                        {submittingRequest ? 'दर्ज किया जा रहा है...' : 'अनुरोध भेजें (Submit)'}
+                        {submittingRequest ? (isEn ? "Submitting..." : 'दर्ज किया जा रहा है...') : (isEn ? "Submit Request" : 'अनुरोध भेजें (Submit)')}
                       </button>
                     </div>
                   </form>
