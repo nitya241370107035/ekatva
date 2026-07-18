@@ -51,7 +51,9 @@
     "logout": "Logout",
     "languages": "Language",
     "schemes": "Government Schemes",
-    "certifications": "Certifications"
+    "certifications": "Certifications",
+    "indentRequests": "Indent Requests",
+    "procurementAdvisor": "Procurement Advisor"
   },
   "login": {
     "title": "Welcome to Ekatva",

@@ -51,7 +51,9 @@
     "logout": "बाहर निकलें",
     "languages": "भाषा",
     "schemes": "सरकारी योजनाएं",
-    "certifications": "प्रमाणपत्र सेटिंग्स"
+    "certifications": "प्रमाणपत्र सेटिंग्स",
+    "indentRequests": "खरीद अनुरोध",
+    "procurementAdvisor": "खरीद सलाहकार"
   },
   "login": {
     "title": "एकत्व (Ekatva) में आपका स्वागत है",
