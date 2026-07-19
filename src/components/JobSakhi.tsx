@@ -329,12 +329,9 @@ export const JobSakhi: React.FC = () => {
       <button
         id="job-sakhi-trigger"
         onClick={(e) => {
-          if (!isExpanded) {
-            e.stopPropagation();
-            setIsExpanded(true);
-          } else {
-            handleMicClick();
-          }
+          e.stopPropagation();
+          setIsExpanded(true);
+          handleMicClick();
         }}
         style={{
           transform: isExpanded ? 'translateX(-16px)' : 'translateX(28px)',
