@@ -74,16 +74,41 @@ export const JobSakhi: React.FC = () => {
     if (isListening) {
       stopListening();
     } else {
-      setResultMsg(null);
-      setSakhiTranscript('');
-      setIsOpen(true);
-      // Speak initial prompt
-      speak("नमस्ते जी! मैं आपकी जॉब सखी हूँ। आप अपनी हाज़िरी, कमाई, नया नोटिस या जॉब कार्ड शुरू करने और पूरा करने के लिए बोल सकते हैं। बोलिए, मैं सुन रही हूँ।");
-      
-      // Delay listening slightly to avoid picking up the Sakhi's own voice
-      setTimeout(() => {
-        startListening(processCommand);
-      }, 1000);
+      const isEn = i18n.language.startsWith('en');
+      const isBn = i18n.language.startsWith('bn');
+
+      // Request microphone permission explicitly if not already granted
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then((stream) => {
+          // Stop stream tracks immediately so it doesn't hold mic open permanently
+          stream.getTracks().forEach(track => track.stop());
+
+          setResultMsg(null);
+          setSakhiTranscript('');
+          setIsOpen(true);
+          
+          const greeting = isBn
+            ? "নমস্কার! আমি আপনার জব সখী। আপনি আপনার হাজিরা, উপার্জন, নতুন বিজ্ঞপ্তি বা কাজ শুরু ও শেষ করার জন্য বলতে পারেন। বলুন, আমি শুনছি।"
+            : isEn
+            ? "Hello! I am your Job Sakhi. You can say check balance, mark attendance, check latest notice, or start/complete job. Tell me, I am listening."
+            : "नमस्ते जी! मैं आपकी जॉब सखी हूँ। आप अपनी हाज़िरी, कमाई, नया नोटिस या जॉब कार्ड शुरू करने और पूरा करने के लिए बोल सकते हैं। बोलिए, मैं सुन रही हूँ।";
+
+          speak(greeting);
+
+          // Delay listening slightly to avoid picking up the Sakhi's own voice
+          setTimeout(() => {
+            startListening(processCommand);
+          }, 1000);
+        })
+        .catch((err) => {
+          console.error("Microphone permission denied:", err);
+          const permissionErr = isBn
+            ? "জব সখী ব্যবহার করার জন্য মাইক্রোফোনের অনুমতি প্রয়োজন।"
+            : isEn
+            ? "Microphone permission is required to use Job Sakhi."
+            : "जॉब सखी का उपयोग करने के लिए माइक्रोफ़ोन की अनुमति आवश्यक है।";
+          toast.error(permissionErr);
+        });
     }
   };
 
