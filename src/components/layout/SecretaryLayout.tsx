@@ -47,6 +47,7 @@ export const SecretaryLayout: React.FC<SecretaryLayoutProps> = ({ children }) =>
   const menuItems: MenuItem[] = [
     { label: t('nav.dashboard', 'डैशबोर्ड'), path: '/secretary', icon: LayoutDashboard, key: 'nav.dashboard' },
     { label: t('nav.products', 'सहकारी उत्पाद सूची'), path: '/secretary/products', icon: ShoppingBag, key: 'nav.products' },
+    { label: t('nav.productReview', 'उत्पाद समीक्षा'), path: '/secretary/product-review', icon: ClipboardList, key: 'nav.productReview' },
     { label: t('nav.rfqOpportunities', 'बाज़ार के अवसर (RFQs)'), path: '/secretary/rfq-opportunities', icon: Sparkles, key: 'nav.rfqOpportunities' },
     { label: t('nav.members', 'सदस्य'), path: '/secretary/members', icon: Users, key: 'nav.members' },
     { label: t('nav.production', 'उत्पादन बोर्ड'), path: '/secretary/production', icon: Hammer, key: 'nav.production' },

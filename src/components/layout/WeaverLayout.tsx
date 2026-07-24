@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { EkatvaLogo } from '../EkatvaLogo';
 import { OfflineBanner } from '../OfflineBanner';
-import { LogOut, User as UserIcon, Calendar, Bell, IndianRupee, MessageSquare, Layers, Award } from 'lucide-react';
+import { LogOut, User as UserIcon, Calendar, Bell, IndianRupee, MessageSquare, Layers, Award, ShoppingBag } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -27,6 +27,8 @@ export const WeaverLayout: React.FC<WeaverLayoutProps> = ({
   const handleTabClick = (tabId: string) => {
     if (tabId === 'schemes') {
       navigate('/weaver/schemes');
+    } else if (tabId === 'my-products') {
+      navigate('/weaver/my-products');
     } else if (location.pathname !== '/weaver') {
       navigate('/weaver', { state: { activeTab: tabId } });
     } else {
@@ -166,6 +168,17 @@ export const WeaverLayout: React.FC<WeaverLayoutProps> = ({
               >
                 <Award className="w-5 h-5" />
                 {t('nav.schemes')}
+              </button>
+              <button
+                onClick={() => handleTabClick('my-products')}
+                className={`flex items-center gap-2 py-3 px-2 border-b-3 font-heading text-lg font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  activeTab === 'my-products' 
+                    ? 'border-loom-wood text-loom-wood' 
+                    : 'border-transparent text-loom-ink-light hover:text-loom-ink'
+                }`}
+              >
+                <ShoppingBag className="w-5 h-5" />
+                {t('nav.myProducts')}
               </button>
             </nav>
           </div>

@@ -49,7 +49,9 @@
     "products": "সমবায় পণ্য",
     "vendors": "বিক্রেতা তালিকা",
     "logout": "প্রস্থান",
-    "languages": "ভাষা"
+    "languages": "ভাষা",
+    "myProducts": "আমার পণ্য",
+    "productReview": "পণ্য পর্যালোচনা"
   },
   "login": {
     "title": "একত্ব (Ekatva)-এ স্বাগতম",
@@ -184,5 +186,44 @@
     "in_progress": "In Progress",
     "normal": "Normal",
     "resolved": "Resolved"
+  },
+  "weaverProducts": {
+    "title": "আমার প্রস্তাবিত পণ্য",
+    "submitNew": "নতুন পণ্য প্রস্তাব করুন",
+    "pendingRejected": "প্রস্তাবিত পণ্যের তালিকা",
+    "formTitle": "পণ্যের নাম",
+    "formDesc": "বর্ণনা",
+    "formPrice": "প্রস্তাবিত মূল্য (₹)",
+    "formTags": "ট্যাগ",
+    "formPhotos": "ছবি (সর্বোচ্চ ৩টি)",
+    "submitBtn": "পর্যালোচনার জন্য জমা দিন",
+    "successSubmit": "পণ্যটি পর্যালোচনার জন্য জমা দেওয়া হয়েছে।",
+    "uploadingImages": "ছবি আপলোড হচ্ছে...",
+    "waitingReview": "পর্যালোচনার অপেক্ষায় রয়েছে",
+    "rejectionReason": "প্রত্যাখ্যানের কারণ",
+    "noSubmissions": "কোনো প্রস্তাবিত পণ্য পাওয়া যায়নি।"
+  },
+  "secretaryReview": {
+    "title": "তাঁতি পণ্য পর্যালোচনা",
+    "desc": "তাঁতিদের পাঠানো পণ্য প্রস্তাবগুলি পর্যালোচনার পর অনুমোদন করুন যাতে সেগুলি স্টোরে দেখা যায়।",
+    "weaver": "তাঁতি",
+    "date": "জমা দেওয়ার তারিখ",
+    "tags": "ট্যাগ",
+    "proposedPrice": "প্রস্তাবিত মূল্য",
+    "approve": "অনুমোদন করুন",
+    "reject": "প্রত্যাখ্যান করুন",
+    "approveModalTitle": "অনুমোদনের নিশ্চয়তা দিন",
+    "approveModalDesc": "পণ্যটি স্টোরে প্রকাশ করার আগে প্রয়োজনীয় বিবরণ সংশোধন করুন।",
+    "priceAdjust": "মূল্য সংশোধন করুন (₹)",
+    "handloomMark": "হ্যান্ডলুম মার্ক শংসাপত্র রয়েছে কি?",
+    "weaverStory": "তাঁতির গল্প / ঐতিহ্য",
+    "confirmApprove": "অনুমোদন ও প্রকাশ করুন",
+    "rejectModalTitle": "প্রস্তাব প্রত্যাখ্যান করুন",
+    "rejectReasonLabel": "প্রত্যাখ্যানের কারণ *",
+    "rejectReasonPlaceholder": "কেন এই প্রস্তাব প্রত্যাখ্যান করা হচ্ছে তা উল্লেখ করুন...",
+    "confirmReject": "প্রত্যাখ্যান করুন",
+    "successApprove": "পণ্য অনুমোদিত এবং লাইভ করা হয়েছে!",
+    "successReject": "পণ্য প্রস্তাব প্রত্যাখ্যাত হয়েছে।",
+    "noPending": "পর্যালোচনার জন্য কোনো প্রস্তাব পেন্ডিং নেই।"
   }
 }

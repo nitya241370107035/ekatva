@@ -62,6 +62,13 @@ service cloud.firestore {
     match /productInstances/{instanceId} {
       allow read, write: if true;
     }
+    match /productSubmissions/{submissionId} {
+      allow read, write: if true;
+      // Secure production alternative:
+      // allow create: if request.auth != null && request.resource.data.weaverId == request.auth.uid;
+      // allow read: if request.auth != null && (resource.data.weaverId == request.auth.uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'secretary');
+      // allow update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'secretary';
+    }
     match /attendance/{attendanceId} {
       allow read, write: if true;
     }

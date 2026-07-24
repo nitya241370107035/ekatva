@@ -31,6 +31,8 @@ import { BuyerDashboard } from './pages/buyer/Dashboard';
 import { Marketplace } from './pages/buyer/Marketplace';
 import { MyRFQs } from './pages/buyer/MyRFQs';
 import { TracePage } from './pages/public/TracePage';
+import { WeaverMyProducts } from './pages/weaver/MyProducts';
+import { SecretaryProductReview } from './pages/secretary/ProductReview';
 import { WeavingLoader } from './components/ui/WeavingLoader';
 import { useTranslation } from 'react-i18next';
 
@@ -95,6 +97,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['weaver']}>
                 <WeaverSchemes />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/weaver/my-products" 
+            element={
+              <ProtectedRoute allowedRoles={['weaver']}>
+                <WeaverMyProducts />
               </ProtectedRoute>
             } 
           />
@@ -217,6 +227,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['secretary']}>
                 <CooperativeProducts />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/secretary/product-review" 
+            element={
+              <ProtectedRoute allowedRoles={['secretary']}>
+                <SecretaryProductReview />
               </ProtectedRoute>
             } 
           />

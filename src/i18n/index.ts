@@ -4,12 +4,10 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 
 import translationHI from './locales/hi/translation.json';
 import translationEN from './locales/en/translation.json';
-import translationBN from './locales/bn/translation.json';
 
 const resources = {
   hi: { translation: translationHI },
   en: { translation: translationEN },
-  bn: { translation: translationBN },
 };
 
 i18next

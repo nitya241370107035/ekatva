@@ -81,6 +81,7 @@ import {
   Vendor,
   Payment,
   Product,
+  ProductSubmission,
   BuyerRFQ,
   Coalition,
   CooperativeQuota,
@@ -1005,6 +1006,74 @@ export async function deleteProduct(productId: string): Promise<void> {
     await deleteDoc(docRef);
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, `products/${productId}`);
+  }
+}
+
+export async function createProductSubmission(submission: Omit<ProductSubmission, 'submissionId' | 'status' | 'createdAt' | 'updatedAt'>): Promise<string> {
+  try {
+    const submissionsRef = collection(db, 'productSubmissions');
+    const docRef = await addDoc(submissionsRef, {
+      ...submission,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+    await updateDoc(docRef, { submissionId: docRef.id });
+    return docRef.id;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, 'productSubmissions');
+  }
+}
+
+export async function getProductSubmissionsByWeaver(weaverId: string): Promise<ProductSubmission[]> {
+  try {
+    const submissionsRef = collection(db, 'productSubmissions');
+    const q = query(submissionsRef, where('weaverId', '==', weaverId));
+    const snap = await getDocs(q);
+    const submissions: ProductSubmission[] = [];
+    snap.forEach((doc) => {
+      submissions.push(doc.data() as ProductSubmission);
+    });
+    return submissions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, 'productSubmissions');
+  }
+}
+
+export async function getProductSubmissionsByCooperative(cooperativeId: string): Promise<ProductSubmission[]> {
+  try {
+    const submissionsRef = collection(db, 'productSubmissions');
+    const q = query(submissionsRef, where('cooperativeId', '==', cooperativeId));
+    const snap = await getDocs(q);
+    const submissions: ProductSubmission[] = [];
+    snap.forEach((doc) => {
+      submissions.push(doc.data() as ProductSubmission);
+    });
+    return submissions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, 'productSubmissions');
+  }
+}
+
+export async function updateProductSubmissionStatus(
+  submissionId: string, 
+  status: 'approved' | 'rejected', 
+  reviewData: { reviewedBy: string; rejectionReason?: string }
+): Promise<void> {
+  try {
+    const docRef = doc(db, 'productSubmissions', submissionId);
+    const updates: Partial<ProductSubmission> = {
+      status,
+      reviewedBy: reviewData.reviewedBy,
+      reviewedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    if (status === 'rejected' && reviewData.rejectionReason) {
+      updates.rejectionReason = reviewData.rejectionReason;
+    }
+    await updateDoc(docRef, updates as any);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `productSubmissions/${submissionId}`);
   }
 }
 

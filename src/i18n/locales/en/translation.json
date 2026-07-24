@@ -53,7 +53,9 @@
     "schemes": "Government Schemes",
     "certifications": "Certifications",
     "indentRequests": "Indent Requests",
-    "procurementAdvisor": "Procurement Advisor"
+    "procurementAdvisor": "Procurement Advisor",
+    "myProducts": "My Products",
+    "productReview": "Product Review"
   },
   "login": {
     "title": "Welcome to Ekatva",
@@ -370,5 +372,44 @@
       "pashmina": "Pashmina",
       "zari": "Zari"
     }
+  },
+  "weaverProducts": {
+    "title": "My Proposed Products",
+    "submitNew": "Submit New Product",
+    "pendingRejected": "Proposed Products List",
+    "formTitle": "Product Title",
+    "formDesc": "Description",
+    "formPrice": "Proposed Price (₹)",
+    "formTags": "Skill/Product Tags",
+    "formPhotos": "Photos (Max 3)",
+    "submitBtn": "Submit for Review",
+    "successSubmit": "Product submitted for review successfully!",
+    "uploadingImages": "Uploading images...",
+    "waitingReview": "Waiting for secretary review",
+    "rejectionReason": "Rejection Reason",
+    "noSubmissions": "No proposed products found."
+  },
+  "secretaryReview": {
+    "title": "Weaver Product Submissions",
+    "desc": "Review and approve product proposals submitted by weavers before they go live on the storefront.",
+    "weaver": "Weaver",
+    "date": "Submitted Date",
+    "tags": "Tags",
+    "proposedPrice": "Proposed Price",
+    "approve": "Approve",
+    "reject": "Reject",
+    "approveModalTitle": "Confirm Product Approval",
+    "approveModalDesc": "Review and adjust details before publishing to the storefront.",
+    "priceAdjust": "Adjust Store Price (₹)",
+    "handloomMark": "Has Handloom Mark Certification?",
+    "weaverStory": "Weaver's Story / Product Heritage",
+    "confirmApprove": "Approve & Publish",
+    "rejectModalTitle": "Reject Product Proposal",
+    "rejectReasonLabel": "Reason for Rejection *",
+    "rejectReasonPlaceholder": "Describe why this product cannot be approved (required)...",
+    "confirmReject": "Reject Proposal",
+    "successApprove": "Product approved and listed in storefront!",
+    "successReject": "Product proposal rejected.",
+    "noPending": "No pending product proposals for review."
   }
 }

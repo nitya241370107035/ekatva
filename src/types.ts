@@ -277,4 +277,23 @@ export interface Coalition {
   createdAt: any;
 }
 
+export interface ProductSubmission {
+  submissionId: string;
+  cooperativeId: string;
+  weaverId: string;
+  weaverName: string;
+  title: string;
+  description: string;
+  images: string[];
+  skillTags: string[];
+  price: number;
+  status: 'pending' | 'approved' | 'rejected';
+  rejectionReason?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+
 
