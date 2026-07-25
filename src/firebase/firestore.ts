@@ -23,7 +23,37 @@ import { db, auth, isMock } from './config';
 // --- Mock Firestore Database Layer ---
 function getMockDB() {
   const data = localStorage.getItem('ekatva_mock_firestore');
-  return data ? JSON.parse(data) : {};
+  if (!data) return {};
+  try {
+    const dbData = JSON.parse(data);
+    let dirty = false;
+    if (dbData.jobCards && dbData.jobCards[""]) {
+      const generatedId = 'mock-jc-' + Math.random().toString(36).substring(2, 11);
+      dbData.jobCards[generatedId] = {
+        ...dbData.jobCards[""],
+        jobCardId: generatedId,
+        _path: `jobCards/${generatedId}`
+      };
+      delete dbData.jobCards[""];
+      dirty = true;
+    }
+    if (dbData.orders && dbData.orders[""]) {
+      const generatedId = 'mock-ord-' + Math.random().toString(36).substring(2, 11);
+      dbData.orders[generatedId] = {
+        ...dbData.orders[""],
+        orderId: generatedId,
+        _path: `orders/${generatedId}`
+      };
+      delete dbData.orders[""];
+      dirty = true;
+    }
+    if (dirty) {
+      localStorage.setItem('ekatva_mock_firestore', JSON.stringify(dbData));
+    }
+    return dbData;
+  } catch (err) {
+    return {};
+  }
 }
 
 function saveMockDB(dbData: any) {
@@ -75,6 +105,11 @@ export function doc(first: any, second?: string, ...segments: string[]): any {
       fullPath = [second, ...segments].filter(Boolean).join('/');
     }
     const parsed = parsePath(fullPath);
+    if (!parsed.id) {
+      const generatedId = 'mock-doc-' + Math.random().toString(36).substring(2, 11);
+      parsed.id = generatedId;
+      parsed.path = parsed.path ? `${parsed.path}/${generatedId}` : generatedId;
+    }
     return { _type: 'doc', ...parsed };
   }
   return fDoc(first, second!, ...segments);

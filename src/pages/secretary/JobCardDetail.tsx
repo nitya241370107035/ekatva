@@ -117,6 +117,15 @@ export const JobCardDetail: React.FC = () => {
     setQcPassModalOpen(true);
   };
 
+  useEffect(() => {
+    if (jobCard && jobCard.status === 'completed') {
+      const queryParams = new URLSearchParams(window.location.search);
+      if (queryParams.get('doQc') === 'true') {
+        openQcPassModal();
+      }
+    }
+  }, [jobCard]);
+
   const handleQcPassAndCreateInstance = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!jobCardId || !jobCard || !currentUser || finalPrice <= 0) return;

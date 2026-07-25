@@ -48,34 +48,34 @@ export const ProductionBoard: React.FC = () => {
         return (
           <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full border border-blue-200 font-bold">
             <Clock className="w-3.5 h-3.5" />
-            {isEn ? "Assigned" : "असाइन"}
+            {t('secretary.productionBoard.badge.assigned')}
           </span>
         );
       case 'in_progress':
         return (
           <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-sm px-3 py-1 rounded-full border border-amber-200 font-bold">
             <Hammer className="w-3.5 h-3.5" />
-            {isEn ? "In Progress" : "प्रगति पर"}
+            {t('secretary.productionBoard.badge.inProgress')}
           </span>
         );
       case 'completed':
         return (
           <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full border border-green-200 font-bold">
             <ClipboardCheck className="w-3.5 h-3.5" />
-            {isEn ? "Completed" : "पूर्ण"}
+            {t('secretary.productionBoard.badge.completed')}
           </span>
         );
       case 'qc_passed':
         return (
           <span className="inline-flex items-center gap-1 bg-emerald-700 text-white text-sm px-3 py-1 rounded-full border border-emerald-800 font-bold">
             <FileCheck2 className="w-3.5 h-3.5" />
-            {isEn ? "QC Passed" : "QC पास"}
+            {t('secretary.productionBoard.badge.qcPassed')}
           </span>
         );
       case 'qc_rejected':
         return (
           <span className="inline-flex items-center gap-1 bg-red-100 text-red-800 text-sm px-3 py-1 rounded-full border border-red-200 font-bold">
-            {isEn ? "QC Failed" : "❌ QC असफल"}
+            ❌ {t('secretary.productionBoard.badge.qcRejected')}
           </span>
         );
       default:
@@ -103,10 +103,10 @@ export const ProductionBoard: React.FC = () => {
         <div>
           <h1 className="font-heading text-3xl sm:text-4xl font-bold text-loom-wood flex items-center gap-2">
             <Hammer className="w-8 h-8 text-loom-gold shrink-0 animate-pulse" />
-            उत्पादन ट्रैकिंग बोर्ड (Production Board)
+            {t('secretary.productionBoard.title')}
           </h1>
           <p className="font-body text-loom-ink/70 mt-1">
-            समिति के बुनकरों के चल रहे बुनाई कार्यों की स्थिति देखें और गुणवत्ता नियंत्रण (QC) संचालित करें।
+            {t('secretary.productionBoard.subtitle')}
           </p>
         </div>
 
@@ -115,19 +115,19 @@ export const ProductionBoard: React.FC = () => {
           className="vintage-button px-5 py-3 flex items-center gap-2 text-base shrink-0 self-start md:self-auto"
         >
           <Plus className="w-5 h-5 shrink-0" />
-          नया कार्य कार्ड (New Job Card)
+          {t('secretary.productionBoard.newJobCard')}
         </button>
       </div>
 
       {/* Tabs Filter */}
       <div className="flex flex-wrap gap-2 mb-6 border-b border-loom-beige/50 pb-4">
         {[
-          { key: 'all', label: 'सभी कार्य' },
-          { key: 'assigned', label: 'असाइन किया गया' },
-          { key: 'in_progress', label: 'प्रगति पर' },
-          { key: 'completed', label: 'पूर्ण कार्य' },
-          { key: 'qc_passed', label: 'QC पास' },
-          { key: 'qc_rejected', label: 'QC असफल' }
+          { key: 'all', label: t('secretary.productionBoard.tabs.all') },
+          { key: 'assigned', label: t('secretary.productionBoard.tabs.assigned') },
+          { key: 'in_progress', label: t('secretary.productionBoard.tabs.inProgress') },
+          { key: 'completed', label: t('secretary.productionBoard.tabs.completed') },
+          { key: 'qc_passed', label: t('secretary.productionBoard.tabs.qcPassed') },
+          { key: 'qc_rejected', label: t('secretary.productionBoard.tabs.qcRejected') }
         ].map((tab) => (
           <button
             key={tab.key}
@@ -148,14 +148,14 @@ export const ProductionBoard: React.FC = () => {
         {loading ? (
           <div className="py-12 flex flex-col items-center justify-center gap-2">
             <div className="w-10 h-10 border-4 border-loom-gold border-t-transparent rounded-full animate-spin" />
-            <p className="font-heading text-loom-wood mt-2 animate-pulse font-semibold">कार्य कार्ड लोड हो रहे हैं...</p>
+            <p className="font-heading text-loom-wood mt-2 animate-pulse font-semibold">{t('secretary.productionBoard.loading')}</p>
           </div>
         ) : filteredCards.length === 0 ? (
           <div className="text-center py-12">
             <span className="text-5xl block mb-3">📋</span>
-            <h3 className="font-heading text-xl font-bold text-loom-wood">कोई कार्य कार्ड नहीं मिला</h3>
+            <h3 className="font-heading text-xl font-bold text-loom-wood">{t('secretary.productionBoard.noJobCards')}</h3>
             <p className="font-body text-loom-ink/70 max-w-md mx-auto mt-2">
-              चयनित श्रेणी में इस सहकारी समिति के अंतर्गत कोई उत्पादन कार्य कार्ड उपलब्ध नहीं है।
+              {t('secretary.productionBoard.noJobCardsDesc')}
             </p>
           </div>
         ) : (
@@ -163,12 +163,12 @@ export const ProductionBoard: React.FC = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b-2 border-loom-beige bg-loom-sand/20">
-                  <th className="p-4 font-heading font-bold text-loom-wood text-base">शीर्षक और डिजाइन कोड</th>
-                  <th className="p-4 font-heading font-bold text-loom-wood text-base">सौंपा गया बुनकर</th>
-                  <th className="p-4 font-heading font-bold text-loom-wood text-base text-center">मात्रा (पीस)</th>
-                  <th className="p-4 font-heading font-bold text-loom-wood text-base text-center">स्थिति</th>
-                  <th className="p-4 font-heading font-bold text-loom-wood text-base">अंतिम तिथि</th>
-                  <th className="p-4 font-heading font-bold text-loom-wood text-base text-center">कार्यवाही</th>
+                  <th className="p-4 font-heading font-bold text-loom-wood text-base">{t('secretary.productionBoard.table.titleDesign')}</th>
+                  <th className="p-4 font-heading font-bold text-loom-wood text-base">{t('secretary.productionBoard.table.weaver')}</th>
+                  <th className="p-4 font-heading font-bold text-loom-wood text-base text-center">{t('secretary.productionBoard.table.qty')}</th>
+                  <th className="p-4 font-heading font-bold text-loom-wood text-base text-center">{t('secretary.productionBoard.table.status')}</th>
+                  <th className="p-4 font-heading font-bold text-loom-wood text-base">{t('secretary.productionBoard.table.deadline')}</th>
+                  <th className="p-4 font-heading font-bold text-loom-wood text-base text-center">{t('secretary.productionBoard.table.action')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -207,15 +207,15 @@ export const ProductionBoard: React.FC = () => {
                           className="bg-loom-sand hover:bg-loom-beige text-loom-wood px-3 py-1.5 rounded-lg font-heading text-sm font-bold transition-all flex items-center gap-1 border border-loom-beige/50"
                         >
                           <Eye className="w-4 h-4" />
-                          विवरण
+                          {t('secretary.productionBoard.btn.details')}
                         </Link>
                         {card.status === 'completed' && (
                           <Link
-                            to={`/secretary/production/${card.jobCardId}`}
+                            to={`/secretary/production/${card.jobCardId}?doQc=true`}
                             className="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 rounded-lg font-heading text-sm font-bold transition-all flex items-center gap-1 shadow-sm"
                           >
                             <ClipboardCheck className="w-4 h-4" />
-                            QC करें
+                            {t('secretary.productionBoard.btn.qc')}
                           </Link>
                         )}
                       </div>

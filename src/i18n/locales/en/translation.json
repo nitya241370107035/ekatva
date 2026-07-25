@@ -452,6 +452,41 @@
       "shipConfirm": "Are you sure you want to mark this item as shipped?",
       "jobCards": "Linked Job Cards",
       "noJobCards": "No Job Cards Linked Yet"
+    },
+    "productionBoard": {
+      "title": "Production Tracking Board",
+      "subtitle": "Monitor status of weaving jobs and operate quality control (QC) checks.",
+      "newJobCard": "New Job Card",
+      "loading": "Loading job cards...",
+      "noJobCards": "No Job Cards Found",
+      "noJobCardsDesc": "No active production job cards are available in the selected category for this cooperative.",
+      "table": {
+        "titleDesign": "Title & Design Code",
+        "weaver": "Assigned Weaver",
+        "qty": "Qty (Pieces)",
+        "status": "Status",
+        "deadline": "Deadline",
+        "action": "Actions"
+      },
+      "tabs": {
+        "all": "All Jobs",
+        "assigned": "Assigned",
+        "inProgress": "In Progress",
+        "completed": "Completed",
+        "qcPassed": "QC Passed",
+        "qcRejected": "QC Failed"
+      },
+      "badge": {
+        "assigned": "Assigned",
+        "inProgress": "In Progress",
+        "completed": "Completed",
+        "qcPassed": "QC Passed",
+        "qcRejected": "QC Failed"
+      },
+      "btn": {
+        "details": "Details",
+        "qc": "Do QC"
+      }
     }
   }
 }
