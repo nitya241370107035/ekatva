@@ -199,9 +199,9 @@ export const Login: React.FC = () => {
             <span className="text-loom-ink-light">{t('login.noAccount', 'खाता नहीं है?')} </span>
             <Link 
               to="/register" 
-              className="font-bold text-loom-wood hover:text-loom-wood-light underline decoration-loom-gold underline-offset-4 inline-flex items-center gap-1 hover:gap-2 transition-all"
+              className="group font-bold text-loom-wood hover:text-loom-wood-light underline decoration-loom-gold underline-offset-4 inline-flex items-center gap-1.5 transition-all"
             >
-              {t('login.registerLink', 'नया पंजीकरण करें')} <ArrowRight className="w-4 h-4" />
+              {t('login.registerLink', 'नया पंजीकरण करें')} <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
             </Link>
           </div>
         </div>

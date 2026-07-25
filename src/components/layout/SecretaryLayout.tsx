@@ -51,6 +51,7 @@ export const SecretaryLayout: React.FC<SecretaryLayoutProps> = ({ children }) =>
     { label: t('nav.rfqOpportunities', 'बाज़ार के अवसर (RFQs)'), path: '/secretary/rfq-opportunities', icon: Sparkles, key: 'nav.rfqOpportunities' },
     { label: t('nav.members', 'सदस्य'), path: '/secretary/members', icon: Users, key: 'nav.members' },
     { label: t('nav.production', 'उत्पादन बोर्ड'), path: '/secretary/production', icon: Hammer, key: 'nav.production' },
+    { label: t('nav.orderFulfillment', 'ऑर्डर पूर्ति'), path: '/secretary/orders', icon: Truck, key: 'nav.orderFulfillment' },
     { label: t('nav.stock', 'कच्चा माल स्टॉक'), path: '/secretary/stock', icon: Package, key: 'nav.stock' },
     { label: t('nav.indentRequests', 'खरीद अनुरोध'), path: '/secretary/indent-requests', icon: ShoppingBag, key: 'nav.indentRequests' },
     { label: t('nav.vendors', 'विक्रेता सूची'), path: '/secretary/vendors', icon: Truck, key: 'nav.vendors' },

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Award, ShieldCheck, ArrowRight } from 'lucide-react';
 import { db } from '../firebase/config';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit } from '../firebase/firestore';
 import { useTranslation } from 'react-i18next';
 
 interface ProductTraceBadgeProps {

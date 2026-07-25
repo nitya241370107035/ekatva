@@ -19,7 +19,7 @@ import {
   Image as ImageIcon,
   CheckCircle2
 } from 'lucide-react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL } from '../../firebase/storage';
 import { storage } from '../../firebase/config';
 import { useTranslation } from 'react-i18next';
 

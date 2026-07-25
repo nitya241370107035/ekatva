@@ -135,6 +135,8 @@ export interface JobCard {
   updatedAt: any;
   qcRemarks?: string;
   qcPhotoURL?: string;
+  orderId?: string;
+  orderItemId?: string;
 }
 
 export interface JobCardStatusLog {
@@ -293,6 +295,35 @@ export interface ProductSubmission {
   reviewedAt?: string;
   createdAt: string;
   updatedAt: string;
+  refCode?: string;
+}
+
+export interface Order {
+  orderId: string;
+  buyerId: string;
+  buyerName: string;
+  rfqId?: string;
+  coalitionId?: string;
+  totalQuantity: number;
+  totalAmount: number;
+  status: 'confirmed' | 'in_production' | 'partially_shipped' | 'completed' | 'cancelled';
+  orderedAt: string;
+  updatedAt: string;
+  rfqDescription?: string;
+}
+
+export interface OrderItem {
+  orderItemId: string;
+  orderId: string;
+  cooperativeId: string;
+  cooperativeName: string;
+  allocatedQuantity: number;
+  completedQuantity: number;
+  shippedQuantity: number;
+  status: 'pending' | 'weaving' | 'qc_passed' | 'shipped';
+  jobCardIds: string[];
+  estimatedDelivery?: string;
+  trackingNumber?: string;
 }
 
 

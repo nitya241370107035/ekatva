@@ -103,14 +103,17 @@ export const BuyerLayout: React.FC<BuyerLayoutProps> = ({ children }) => {
                 {t('nav.rfqOpportunities')}
               </Link>
 
-              <button
-                disabled
-                className="flex items-center gap-2 py-3 px-2 border-b-3 font-heading text-lg font-bold border-transparent text-loom-ink-light/40 cursor-not-allowed"
-                title={t('common.comingSoon', 'शीघ्र आ रहा है (Coming soon)')}
+              <Link
+                to="/buyer/orders"
+                className={`flex items-center gap-2 py-3 px-2 border-b-3 font-heading text-lg font-bold transition-all cursor-pointer ${
+                  activeTab === 'orders' 
+                    ? 'border-loom-wood text-loom-wood' 
+                    : 'border-transparent text-loom-ink-light hover:text-loom-ink'
+                }`}
               >
                 <ShoppingCart className="w-5 h-5" />
-                {t('common.settings')}
-              </button>
+                {t('nav.myOrders', 'मेरे ऑर्डर')}
+              </Link>
             </nav>
           </div>
         </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { WeaverLayout } from '../../components/layout/WeaverLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc } from '../../firebase/firestore';
 import { db } from '../../firebase/config';
 import { WeaverProfile, Notice, Grievance, JobCard, Payment } from '../../types';
 import { NoticeCard } from '../../components/NoticeCard';

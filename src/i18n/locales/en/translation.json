@@ -55,7 +55,9 @@
     "indentRequests": "Indent Requests",
     "procurementAdvisor": "Procurement Advisor",
     "myProducts": "My Products",
-    "productReview": "Product Review"
+    "productReview": "Product Review",
+    "myOrders": "My Orders",
+    "orderFulfillment": "Order Fulfillment"
   },
   "login": {
     "title": "Welcome to Ekatva",
@@ -63,7 +65,7 @@
     "emailLabel": "Email Address",
     "passwordLabel": "Password",
     "loginBtn": "Login",
-    "registerLink": "Register New Weaver",
+    "registerLink": "Register New Account",
     "demoSec": "Demo Secretary Login",
     "demoWeaver": "Demo Weaver Login",
     "or": "OR",
@@ -411,5 +413,45 @@
     "successApprove": "Product approved and listed in storefront!",
     "successReject": "Product proposal rejected.",
     "noPending": "No pending product proposals for review."
+  },
+  "buyer": {
+    "orders": {
+      "title": "My Orders",
+      "noOrders": "No Orders Found",
+      "orderId": "Order ID",
+      "totalQuantity": "Total Quantity",
+      "totalAmount": "Total Amount",
+      "orderDate": "Order Date",
+      "progress": "Progress",
+      "cooperativeProgress": "Cooperative Progress",
+      "estimatedDelivery": "Estimated Delivery",
+      "viewDetails": "View Details",
+      "status": {
+        "confirmed": "Confirmed",
+        "in_production": "In Production",
+        "partially_shipped": "Partially Shipped",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      }
+    }
+  },
+  "secretary": {
+    "orders": {
+      "title": "Order Fulfillment",
+      "noOrders": "No Allocated Orders",
+      "orderId": "Order ID",
+      "buyerName": "Buyer Name",
+      "totalQuantity": "Allocated Quota",
+      "completedCount": "Completed",
+      "shippedCount": "Shipped",
+      "status": "Fulfillment Status",
+      "markShipped": "Mark as Shipped",
+      "shipped": "Shipped",
+      "trackingNumber": "Tracking Number",
+      "enterTracking": "Enter Shipping Tracking Number",
+      "shipConfirm": "Are you sure you want to mark this item as shipped?",
+      "jobCards": "Linked Job Cards",
+      "noJobCards": "No Job Cards Linked Yet"
+    }
   }
 }

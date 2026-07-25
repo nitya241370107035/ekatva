@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { db } from '../../firebase/config';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc } from '../../firebase/firestore';
 import { ProductInstance } from '../../types';
 import { verifyHashChain } from '../../utils/hashUtils';
 import { 

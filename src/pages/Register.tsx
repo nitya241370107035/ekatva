@@ -5,15 +5,16 @@ import { EkatvaLogo } from '../components/EkatvaLogo';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Toast } from '../components/ui/Toast';
-import { User, Phone, Mail, Lock, Shield, Award, Landmark, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
+import { User, Phone, Mail, Lock, Shield, Award, Landmark, MapPin, ChevronLeft, ChevronRight, Briefcase, ShoppingBag } from 'lucide-react';
 import { AnimatedPage } from '../components/ui/AnimatedPage';
 
 
 export const Register: React.FC = () => {
-  const { registerWeaver } = useAuth();
+  const { registerGeneric } = useAuth();
   const navigate = useNavigate();
 
-  // Step state
+  // Role and Step state
+  const [role, setRole] = useState<'weaver' | 'secretary' | 'buyer'>('weaver');
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -95,40 +96,46 @@ export const Register: React.FC = () => {
     e.preventDefault();
     setError('');
 
-    // Final checks
-    if (!bankName || !accountNumber || !ifsc || !street || !city || !stateName || !pincode) {
-      setError('कृपया बैंक विवरण और पूरा पता भरें।');
-      return;
+    // Final checks for weaver role
+    if (role === 'weaver') {
+      if (!bankName || !accountNumber || !ifsc || !street || !city || !stateName || !pincode) {
+        setError('कृपया बैंक विवरण और पूरा पता भरें।');
+        return;
+      }
     }
 
     setLoading(true);
 
     try {
-      await registerWeaver(email, password, {
-        displayName,
-        phone,
-        skillTags: selectedSkills,
-        experience: Number(experience),
-        numberOfLooms: Number(numberOfLooms),
-        dailyCapacity: Number(dailyCapacity),
-        aadharNumber: aadharNumber || undefined,
-        bankAccount: {
-          bankName,
-          accountNumber,
-          ifsc
-        },
-        address: {
-          street,
-          city,
-          state: stateName,
-          pincode
-        },
-        photoURL: ''
-      });
+      if (role === 'weaver') {
+        await registerGeneric(email, password, 'weaver', displayName, {
+          displayName,
+          phone,
+          skillTags: selectedSkills,
+          experience: Number(experience),
+          numberOfLooms: Number(numberOfLooms),
+          dailyCapacity: Number(dailyCapacity),
+          aadharNumber: aadharNumber || undefined,
+          bankAccount: {
+            bankName,
+            accountNumber,
+            ifsc
+          },
+          address: {
+            street,
+            city,
+            state: stateName,
+            pincode
+          },
+          photoURL: ''
+        });
+      } else {
+        await registerGeneric(email, password, role, displayName);
+      }
 
       setToastMessage('पंजीकरण सफल! एकत्व में आपका स्वागत है।');
       setTimeout(() => {
-        navigate('/weaver');
+        navigate(`/${role}`);
       }, 1500);
 
     } catch (err: any) {
@@ -194,6 +201,53 @@ export const Register: React.FC = () => {
           {/* Step 1: Personal Info */}
           {step === 1 && (
             <div className="space-y-4 text-left">
+              {/* Role Selector Grid */}
+              <div className="mb-6">
+                <label className="font-heading text-sm font-bold text-loom-wood block mb-2">
+                  अपनी भूमिका चुनें (Choose Your Registration Role) *
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setRole('weaver')}
+                    className={`p-3 rounded-xl border-2 flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
+                      role === 'weaver'
+                        ? 'bg-loom-wood text-loom-cream border-loom-wood scale-[1.02] shadow-sm'
+                        : 'bg-loom-cream border-loom-beige text-loom-ink-light hover:border-loom-wood/40'
+                    }`}
+                  >
+                    <User className="w-5 h-5 text-loom-gold" />
+                    <span className="text-xs font-heading font-semibold">बुनकर (Weaver)</span>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setRole('secretary')}
+                    className={`p-3 rounded-xl border-2 flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
+                      role === 'secretary'
+                        ? 'bg-loom-wood text-loom-cream border-loom-wood scale-[1.02] shadow-sm'
+                        : 'bg-loom-cream border-loom-beige text-loom-ink-light hover:border-loom-wood/40'
+                    }`}
+                  >
+                    <Briefcase className="w-5 h-5 text-loom-gold" />
+                    <span className="text-xs font-heading font-semibold">सचिव (Secretary)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setRole('buyer')}
+                    className={`p-3 rounded-xl border-2 flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
+                      role === 'buyer'
+                        ? 'bg-loom-wood text-loom-cream border-loom-wood scale-[1.02] shadow-sm'
+                        : 'bg-loom-cream border-loom-beige text-loom-ink-light hover:border-loom-wood/40'
+                    }`}
+                  >
+                    <ShoppingBag className="w-5 h-5 text-loom-gold" />
+                    <span className="text-xs font-heading font-semibold">क्रेता (Buyer)</span>
+                  </button>
+                </div>
+              </div>
+
               <Input
                 id="name"
                 type="text"
@@ -439,7 +493,7 @@ export const Register: React.FC = () => {
               </Link>
             )}
 
-            {step < 3 ? (
+            {step < 3 && role === 'weaver' ? (
               <Button
                 type="button"
                 onClick={handleNextStep}

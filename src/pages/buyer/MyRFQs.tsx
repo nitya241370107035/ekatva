@@ -6,7 +6,8 @@ import {
   getBuyerRFQs, 
   getCoalitionsByRFQ,
   updateRFQStatus,
-  updateCoalitionStatus
+  updateCoalitionStatus,
+  createOrder
 } from '../../firebase/firestore';
 import { BuyerRFQ, Coalition } from '../../types';
 import { Button } from '../../components/ui/Button';
@@ -133,11 +134,35 @@ export const MyRFQs: React.FC = () => {
     
     if (window.confirm(confirmMsg)) {
       try {
+        const rfq = rfqs.find(r => r.rfqId === rfqId);
+        const coalition = coalitions[rfqId];
+        
         await updateRFQStatus(rfqId, 'accepted');
         await updateCoalitionStatus(coalitionId, 'accepted');
+        
+        if (coalition && rfq) {
+          const orderItemsData = coalition.cooperativeQuotas.map(quota => ({
+            cooperativeId: quota.cooperativeId,
+            cooperativeName: quota.cooperativeName,
+            allocatedQuantity: quota.allocatedQuantity,
+            estimatedDelivery: rfq.deadline
+          }));
+          
+          await createOrder(
+            buyerId,
+            buyerName,
+            rfqId,
+            coalitionId,
+            coalition.totalQuantity,
+            coalition.totalQuotePrice,
+            orderItemsData,
+            rfq.productDescription
+          );
+        }
+        
         alert(isEn 
-          ? 'Quotation accepted! Contract allocation sent to the cooperatives.' 
-          : 'कोटेशन स्वीकार किया गया! सहकारी समितियों को अनुबंध आवंटन भेज दिया गया है।');
+          ? 'Quotation accepted! Contract allocation sent to the cooperatives and order has been created.' 
+          : 'कोटेशन स्वीकार किया गया! सहकारी समितियों को अनुबंध आवंटन भेज दिया गया है और आपका ऑर्डर जनरेट हो गया है।');
         fetchData();
       } catch (err) {
         console.error("Error accepting quote:", err);
@@ -488,15 +513,17 @@ export const MyRFQs: React.FC = () => {
               <div className="flex justify-end gap-2.5 pt-4 border-t border-loom-beige">
                 <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-white border border-loom-beige rounded-xl text-xs font-bold cursor-pointer hover:bg-loom-sand/10"
                 >
                   {isEn ? "Cancel" : "रद्द करें"}
                 </Button>
                 <Button
                   type="submit"
+                  variant="primary"
+                  size="sm"
                   disabled={formSubmitting}
-                  className="px-5 py-2 bg-loom-wood hover:bg-loom-wood-light text-white rounded-xl text-xs font-bold cursor-pointer disabled:opacity-50"
                 >
                   {formSubmitting ? (isEn ? "Processing..." : 'प्रक्रिया चालू...') : (isEn ? "Publish Demand Request" : 'मांग अनुरोध प्रकाशित करें')}
                 </Button>

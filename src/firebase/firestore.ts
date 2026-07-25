@@ -1,22 +1,379 @@
 import { 
-  doc, 
-  setDoc, 
-  getDoc, 
-  getDocs, 
-  collection, 
-  query, 
-  where, 
-  serverTimestamp,
-  updateDoc,
-  increment,
-  addDoc,
-  orderBy,
-  onSnapshot,
-  runTransaction,
-  writeBatch,
-  deleteDoc
+  doc as fDoc, 
+  setDoc as fSetDoc, 
+  getDoc as fGetDoc, 
+  getDocs as fGetDocs, 
+  collection as fCollection, 
+  query as fQuery, 
+  where as fWhere, 
+  serverTimestamp as fServerTimestamp,
+  updateDoc as fUpdateDoc,
+  increment as fIncrement,
+  addDoc as fAddDoc,
+  orderBy as fOrderBy,
+  onSnapshot as fOnSnapshot,
+  runTransaction as fRunTransaction,
+  writeBatch as fWriteBatch,
+  deleteDoc as fDeleteDoc,
+  limit as fLimit,
+  collectionGroup as fCollectionGroup
 } from 'firebase/firestore';
-import { db, auth } from './config';
+import { db, auth, isMock } from './config';
+
+// --- Mock Firestore Database Layer ---
+function getMockDB() {
+  const data = localStorage.getItem('ekatva_mock_firestore');
+  return data ? JSON.parse(data) : {};
+}
+
+function saveMockDB(dbData: any) {
+  localStorage.setItem('ekatva_mock_firestore', JSON.stringify(dbData));
+  window.dispatchEvent(new CustomEvent('ekatva_firestore_change'));
+}
+
+function parsePath(path: string) {
+  const parts = path.split('/').filter(Boolean);
+  const isCollection = parts.length % 2 !== 0;
+  const collectionName = isCollection ? parts[parts.length - 1] : parts[parts.length - 2];
+  const id = isCollection ? '' : parts[parts.length - 1];
+  return { collectionName, id, path };
+}
+
+function resolveMockData(data: any, existingData: any): any {
+  if (data === null || typeof data !== 'object') return data;
+  if (data._type === 'serverTimestamp') {
+    return new Date().toISOString();
+  }
+  if (data._type === 'increment') {
+    const prev = existingData ? Number(existingData) : 0;
+    return prev + data.value;
+  }
+  if (Array.isArray(data)) {
+    return data.map(item => resolveMockData(item, null));
+  }
+  const resolved: any = {};
+  for (const key of Object.keys(data)) {
+    const val = data[key];
+    if (val && val._type === 'increment') {
+      const prev = existingData && existingData[key] ? Number(existingData[key]) : 0;
+      resolved[key] = prev + val.value;
+    } else if (val && val._type === 'serverTimestamp') {
+      resolved[key] = new Date().toISOString();
+    } else {
+      resolved[key] = resolveMockData(val, existingData ? existingData[key] : null);
+    }
+  }
+  return resolved;
+}
+
+export function doc(first: any, second?: string, ...segments: string[]): any {
+  if (isMock) {
+    let fullPath = '';
+    if (first && (first._type === 'collection' || first._type === 'doc')) {
+      fullPath = [first.path, second, ...segments].filter(Boolean).join('/');
+    } else {
+      fullPath = [second, ...segments].filter(Boolean).join('/');
+    }
+    const parsed = parsePath(fullPath);
+    return { _type: 'doc', ...parsed };
+  }
+  return fDoc(first, second!, ...segments);
+}
+
+export function collection(first: any, second?: string, ...segments: string[]): any {
+  if (isMock) {
+    let fullPath = '';
+    if (first && (first._type === 'doc' || first._type === 'collection')) {
+      fullPath = [first.path, second, ...segments].filter(Boolean).join('/');
+    } else {
+      fullPath = [second, ...segments].filter(Boolean).join('/');
+    }
+    const parsed = parsePath(fullPath);
+    return { _type: 'collection', ...parsed };
+  }
+  return fCollection(first, second!, ...segments);
+}
+
+export function collectionGroup(database: any, collectionId: string): any {
+  if (isMock) {
+    return {
+      _type: 'collection',
+      collectionName: collectionId,
+      path: collectionId,
+    };
+  }
+  return fCollectionGroup(database, collectionId);
+}
+
+export async function setDoc(docRef: any, data: any, options?: any): Promise<void> {
+  if (isMock) {
+    const dbData = getMockDB();
+    const col = docRef.collectionName;
+    const id = docRef.id;
+    if (!dbData[col]) dbData[col] = {};
+    const resolvedData = resolveMockData(data, dbData[col][id]);
+    resolvedData._path = docRef.path;
+    if (options && options.merge) {
+      dbData[col][id] = { ...dbData[col][id], ...resolvedData };
+    } else {
+      dbData[col][id] = resolvedData;
+    }
+    saveMockDB(dbData);
+    return;
+  }
+  return fSetDoc(docRef, data, options);
+}
+
+export async function updateDoc(docRef: any, data: any): Promise<void> {
+  if (isMock) {
+    const dbData = getMockDB();
+    const col = docRef.collectionName;
+    const id = docRef.id;
+    if (!dbData[col]) dbData[col] = {};
+    const resolvedData = resolveMockData(data, dbData[col][id]);
+    resolvedData._path = docRef.path;
+    dbData[col][id] = { ...dbData[col][id], ...resolvedData };
+    saveMockDB(dbData);
+    return;
+  }
+  return fUpdateDoc(docRef, data);
+}
+
+export async function getDoc(docRef: any): Promise<any> {
+  if (isMock) {
+    const dbData = getMockDB();
+    const col = docRef.collectionName;
+    const id = docRef.id;
+    const data = dbData[col]?.[id] || null;
+    return {
+      id,
+      exists: () => data !== null,
+      data: () => data,
+    };
+  }
+  return fGetDoc(docRef);
+}
+
+export async function getDocs(queryOrCollection: any): Promise<any> {
+  if (isMock) {
+    const dbData = getMockDB();
+    let col = '';
+    let constraints: any[] = [];
+    let queryPath = '';
+    if (queryOrCollection._type === 'collection') {
+      col = queryOrCollection.collectionName;
+      queryPath = queryOrCollection.path;
+    } else if (queryOrCollection._type === 'query') {
+      col = queryOrCollection.collectionRef.collectionName;
+      queryPath = queryOrCollection.collectionRef.path;
+      constraints = queryOrCollection.constraints || [];
+    }
+    const colData = dbData[col] || {};
+    let docs = Object.keys(colData).map(id => ({
+      id,
+      exists: () => true,
+      data: () => colData[id],
+    }));
+
+    // Filter by subcollection path prefix
+    if (queryPath && queryPath.includes('/')) {
+      docs = docs.filter(doc => {
+        const docPath = doc.data()?._path || '';
+        return docPath.startsWith(queryPath);
+      });
+    }
+
+    // Apply where filters
+    for (const filter of constraints) {
+      if (filter.type === 'where') {
+        const { field, op, value } = filter;
+        docs = docs.filter(doc => {
+          const docVal = doc.data()?.[field];
+          if (op === '==') return docVal === value;
+          if (op === '!=') return docVal !== value;
+          if (op === '>') return docVal > value;
+          if (op === '<') return docVal < value;
+          if (op === '>=') return docVal >= value;
+          if (op === '<=') return docVal <= value;
+          if (op === 'array-contains') return Array.isArray(docVal) && docVal.includes(value);
+          return true;
+        });
+      }
+    }
+    // Apply orderBy filters
+    for (const filter of constraints) {
+      if (filter.type === 'orderBy') {
+        const { field, direction } = filter;
+        docs.sort((a, b) => {
+          const valA = a.data()?.[field];
+          const valB = b.data()?.[field];
+          if (valA === undefined) return 1;
+          if (valB === undefined) return -1;
+          if (valA < valB) return direction === 'desc' ? 1 : -1;
+          if (valA > valB) return direction === 'desc' ? -1 : 1;
+          return 0;
+        });
+      }
+    }
+    // Apply limit
+    const limitFilter = constraints.find(filter => filter.type === 'limit');
+    if (limitFilter) {
+      docs = docs.slice(0, limitFilter.value);
+    }
+    return {
+      docs,
+      forEach: (callback: (doc: any) => void) => docs.forEach(callback),
+      empty: docs.length === 0,
+      size: docs.length,
+    };
+  }
+  return fGetDocs(queryOrCollection);
+}
+
+export async function addDoc(collectionRef: any, data: any): Promise<any> {
+  if (isMock) {
+    const dbData = getMockDB();
+    const col = collectionRef.collectionName;
+    if (!dbData[col]) dbData[col] = {};
+    const id = 'mock-id-' + Math.random().toString(36).substring(2, 11);
+    const resolvedData = resolveMockData(data, null);
+    resolvedData._path = `${collectionRef.path}/${id}`;
+    dbData[col][id] = resolvedData;
+    saveMockDB(dbData);
+    return {
+      id,
+      _type: 'doc',
+      collectionName: col,
+      path: `${collectionRef.path}/${id}`,
+    };
+  }
+  return fAddDoc(collectionRef, data);
+}
+
+export async function deleteDoc(docRef: any): Promise<void> {
+  if (isMock) {
+    const dbData = getMockDB();
+    const col = docRef.collectionName;
+    const id = docRef.id;
+    if (dbData[col] && dbData[col][id]) {
+      delete dbData[col][id];
+      saveMockDB(dbData);
+    }
+    return;
+  }
+  return fDeleteDoc(docRef);
+}
+
+export function query(collectionRef: any, ...constraints: any[]): any {
+  if (isMock) {
+    return {
+      _type: 'query',
+      collectionRef,
+      constraints,
+    };
+  }
+  return fQuery(collectionRef, ...constraints);
+}
+
+export function where(field: string, op: string, value: any): any {
+  if (isMock) {
+    return { type: 'where', field, op, value };
+  }
+  return fWhere(field, op as any, value);
+}
+
+export function orderBy(field: string, direction: 'asc' | 'desc' = 'asc'): any {
+  if (isMock) {
+    return { type: 'orderBy', field, direction };
+  }
+  return fOrderBy(field, direction);
+}
+
+export function limit(n: number): any {
+  if (isMock) {
+    return { type: 'limit', value: n };
+  }
+  return fLimit(n);
+}
+
+export function onSnapshot(queryRef: any, callback: (snapshot: any) => void): () => void {
+  if (isMock) {
+    const handler = () => {
+      getDocs(queryRef).then(callback);
+    };
+    window.addEventListener('ekatva_firestore_change', handler);
+    setTimeout(handler, 0);
+    return () => {
+      window.removeEventListener('ekatva_firestore_change', handler);
+    };
+  }
+  return fOnSnapshot(queryRef, callback);
+}
+
+export async function runTransaction(database: any, updateFunction: (transaction: any) => Promise<any>): Promise<any> {
+  if (isMock) {
+    const mockTransaction = {
+      get: async (docRef: any) => {
+        return getDoc(docRef);
+      },
+      set: (docRef: any, data: any, options?: any) => {
+        setDoc(docRef, data, options);
+        return mockTransaction;
+      },
+      update: (docRef: any, data: any) => {
+        updateDoc(docRef, data);
+        return mockTransaction;
+      },
+      delete: (docRef: any) => {
+        deleteDoc(docRef);
+        return mockTransaction;
+      }
+    };
+    return updateFunction(mockTransaction);
+  }
+  return fRunTransaction(database, updateFunction);
+}
+
+export function writeBatch(database: any): any {
+  if (isMock) {
+    const operations: (() => Promise<void>)[] = [];
+    const batch = {
+      set: (docRef: any, data: any, options?: any) => {
+        operations.push(() => setDoc(docRef, data, options));
+        return batch;
+      },
+      update: (docRef: any, data: any) => {
+        operations.push(() => updateDoc(docRef, data));
+        return batch;
+      },
+      delete: (docRef: any) => {
+        operations.push(() => deleteDoc(docRef));
+        return batch;
+      },
+      commit: async () => {
+        for (const op of operations) {
+          await op();
+        }
+      }
+    };
+    return batch;
+  }
+  return fWriteBatch(database);
+}
+
+export function serverTimestamp(): any {
+  if (isMock) {
+    return { _type: 'serverTimestamp' };
+  }
+  return fServerTimestamp();
+}
+
+export function increment(value: number): any {
+  if (isMock) {
+    return { _type: 'increment', value };
+  }
+  return fIncrement(value);
+}
 
 export enum OperationType {
   CREATE = 'create',
@@ -481,6 +838,31 @@ export async function createJobCard(
     remarks: 'कार्य कार्ड का निर्माण और बुनकर को असाइनमेंट।'
   };
   batch.set(statusLogRef, statusLogData);
+
+  if (data.orderId && data.orderItemId) {
+    const itemDocRef = doc(db, 'orders', data.orderId, 'orderItems', data.orderItemId);
+    let existingJobCardIds: string[] = [];
+    if (isMock) {
+      const dbData = getMockDB();
+      const existingItem = dbData['orderItems']?.[data.orderItemId];
+      if (existingItem && existingItem.jobCardIds) {
+        existingJobCardIds = [...existingItem.jobCardIds];
+      }
+    }
+    if (!existingJobCardIds.includes(jobCardId)) {
+      existingJobCardIds.push(jobCardId);
+    }
+    batch.update(itemDocRef, {
+      status: 'weaving',
+      jobCardIds: existingJobCardIds
+    });
+    
+    const orderDocRef = doc(db, 'orders', data.orderId);
+    batch.update(orderDocRef, {
+      status: 'in_production',
+      updatedAt: now
+    });
+  }
 
   await batch.commit();
   return jobCardId;
@@ -1523,6 +1905,245 @@ export async function updateCooperativeCertifications(cooperativeId: string, cer
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, `cooperatives/${cooperativeId}`);
     throw error;
+  }
+}
+
+// --- Buyer Order Tracking Helper Functions ---
+
+import { Order, OrderItem } from '../types';
+
+export async function createOrder(
+  buyerId: string,
+  buyerName: string,
+  rfqId: string | undefined,
+  coalitionId: string | undefined,
+  totalQuantity: number,
+  totalAmount: number,
+  orderItemsData: Omit<OrderItem, 'orderItemId' | 'orderId' | 'completedQuantity' | 'shippedQuantity' | 'status' | 'jobCardIds'>[],
+  rfqDescription?: string
+): Promise<string> {
+  try {
+    const orderId = 'order-id-' + Math.random().toString(36).substring(2, 9).toUpperCase();
+    const orderDocRef = doc(db, 'orders', orderId);
+    
+    const newOrder: Order = {
+      orderId,
+      buyerId,
+      buyerName,
+      rfqId,
+      coalitionId,
+      totalQuantity,
+      totalAmount,
+      status: 'confirmed',
+      orderedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      rfqDescription
+    };
+    
+    await setDoc(orderDocRef, newOrder);
+    
+    for (const item of orderItemsData) {
+      const orderItemId = 'order-item-id-' + Math.random().toString(36).substring(2, 9).toUpperCase();
+      const itemDocRef = doc(db, 'orders', orderId, 'orderItems', orderItemId);
+      
+      const newOrderItem: OrderItem = {
+        ...item,
+        orderItemId,
+        orderId,
+        completedQuantity: 0,
+        shippedQuantity: 0,
+        status: 'pending',
+        jobCardIds: []
+      };
+      
+      await setDoc(itemDocRef, newOrderItem);
+    }
+    
+    return orderId;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, `orders`);
+    throw error;
+  }
+}
+
+export async function getBuyerOrders(buyerId: string): Promise<Order[]> {
+  try {
+    const ordersRef = collection(db, 'orders');
+    const q = query(ordersRef, where('buyerId', '==', buyerId));
+    const querySnapshot = await getDocs(q);
+    
+    const orders: Order[] = [];
+    querySnapshot.forEach((docSnap) => {
+      orders.push(docSnap.data() as Order);
+    });
+    
+    return orders.sort((a, b) => new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime());
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, `orders`);
+    return [];
+  }
+}
+
+export async function getOrder(orderId: string): Promise<Order | null> {
+  try {
+    const orderDocRef = doc(db, 'orders', orderId);
+    const snap = await getDoc(orderDocRef);
+    if (snap.exists()) {
+      return snap.data() as Order;
+    }
+    return null;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, `orders/${orderId}`);
+    return null;
+  }
+}
+
+export async function getOrderItems(orderId: string): Promise<OrderItem[]> {
+  try {
+    const orderItemsRef = collection(db, 'orders', orderId, 'orderItems');
+    const querySnapshot = await getDocs(orderItemsRef);
+    
+    const items: OrderItem[] = [];
+    querySnapshot.forEach((docSnap) => {
+      items.push(docSnap.data() as OrderItem);
+    });
+    
+    return items;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, `orders/${orderId}/orderItems`);
+    return [];
+  }
+}
+
+export async function getCooperativeOrderItems(cooperativeId: string): Promise<OrderItem[]> {
+  try {
+    const orderItemsRef = collectionGroup(db, 'orderItems');
+    const q = query(orderItemsRef, where('cooperativeId', '==', cooperativeId));
+    const querySnapshot = await getDocs(q);
+    
+    const items: OrderItem[] = [];
+    querySnapshot.forEach((docSnap) => {
+      items.push(docSnap.data() as OrderItem);
+    });
+    
+    return items;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, `orderItems`);
+    return [];
+  }
+}
+
+export async function updateOrderItemProgress(
+  orderId: string,
+  orderItemId: string,
+  completedQuantity: number,
+  jobCardId?: string
+): Promise<void> {
+  try {
+    const itemDocRef = doc(db, 'orders', orderId, 'orderItems', orderItemId);
+    const itemSnap = await getDoc(itemDocRef);
+    if (!itemSnap.exists()) return;
+    
+    const item = itemSnap.data() as OrderItem;
+    const newCompleted = Math.min(item.allocatedQuantity, item.completedQuantity + completedQuantity);
+    
+    let newStatus = item.status;
+    if (newCompleted >= item.allocatedQuantity) {
+      newStatus = 'qc_passed';
+    } else if (newCompleted > 0 && item.status === 'pending') {
+      newStatus = 'weaving';
+    }
+    
+    const jobCardIds = item.jobCardIds || [];
+    if (jobCardId && !jobCardIds.includes(jobCardId)) {
+      jobCardIds.push(jobCardId);
+    }
+    
+    await updateDoc(itemDocRef, {
+      completedQuantity: newCompleted,
+      status: newStatus,
+      jobCardIds
+    });
+    
+    await updateOrderStatus(orderId);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, `orders/${orderId}/orderItems/${orderItemId}`);
+  }
+}
+
+export async function markOrderItemShipped(
+  orderId: string,
+  orderItemId: string,
+  trackingNumber: string
+): Promise<void> {
+  try {
+    const itemDocRef = doc(db, 'orders', orderId, 'orderItems', orderItemId);
+    const itemSnap = await getDoc(itemDocRef);
+    if (!itemSnap.exists()) return;
+    
+    const item = itemSnap.data() as OrderItem;
+    
+    await updateDoc(itemDocRef, {
+      shippedQuantity: item.completedQuantity || item.allocatedQuantity,
+      status: 'shipped',
+      trackingNumber
+    });
+    
+    await updateOrderStatus(orderId);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, `orders/${orderId}/orderItems/${orderItemId}`);
+  }
+}
+
+export async function updateOrderStatus(orderId: string): Promise<void> {
+  try {
+    const orderDocRef = doc(db, 'orders', orderId);
+    const orderSnap = await getDoc(orderDocRef);
+    if (!orderSnap.exists()) return;
+    
+    const order = orderSnap.data() as Order;
+    const items = await getOrderItems(orderId);
+    if (items.length === 0) return;
+    
+    let allCompleted = true;
+    let anyInProduction = false;
+    let anyShipped = false;
+    let allShipped = true;
+    
+    for (const item of items) {
+      if (item.status === 'weaving' || item.status === 'qc_passed') {
+        anyInProduction = true;
+      }
+      if (item.completedQuantity < item.allocatedQuantity) {
+        allCompleted = false;
+      }
+      if (item.status === 'shipped') {
+        anyShipped = true;
+      } else {
+        allShipped = false;
+      }
+    }
+    
+    let newStatus: Order['status'] = order.status;
+    
+    if (allShipped) {
+      newStatus = 'completed';
+    } else if (anyShipped) {
+      newStatus = 'partially_shipped';
+    } else if (allCompleted) {
+      newStatus = 'in_production';
+    } else if (anyInProduction) {
+      newStatus = 'in_production';
+    } else {
+      newStatus = 'confirmed';
+    }
+    
+    await updateDoc(orderDocRef, {
+      status: newStatus,
+      updatedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, `orders/${orderId}`);
   }
 }
 

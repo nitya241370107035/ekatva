@@ -51,7 +51,9 @@
     "logout": "প্রস্থান",
     "languages": "ভাষা",
     "myProducts": "আমার পণ্য",
-    "productReview": "পণ্য পর্যালোচনা"
+    "productReview": "পণ্য পর্যালোচনা",
+    "myOrders": "আমার অর্ডার",
+    "orderFulfillment": "অর্ডার পূর্ণতা"
   },
   "login": {
     "title": "একত্ব (Ekatva)-এ স্বাগতম",
@@ -59,7 +61,7 @@
     "emailLabel": "ইমেল ঠিকানা",
     "passwordLabel": "পাসওয়ার্ড",
     "loginBtn": "লগইন করুন",
-    "registerLink": "নতুন তাঁতি নিবন্ধন",
+    "registerLink": "নতুন অ্যাকাউন্ট নিবন্ধন",
     "demoSec": "ডেমো সেক্রেটারি লগইন",
     "demoWeaver": "ডেমো তাঁতি লগইন",
     "or": "অথবা",
@@ -225,5 +227,45 @@
     "successApprove": "পণ্য অনুমোদিত এবং লাইভ করা হয়েছে!",
     "successReject": "পণ্য প্রস্তাব প্রত্যাখ্যাত হয়েছে।",
     "noPending": "পর্যালোচনার জন্য কোনো প্রস্তাব পেন্ডিং নেই।"
+  },
+  "buyer": {
+    "orders": {
+      "title": "আমার অর্ডার",
+      "noOrders": "কোনো অর্ডার পাওয়া যায়নি",
+      "orderId": "অর্ডার আইডি",
+      "totalQuantity": "মোট পরিমাণ",
+      "totalAmount": "মোট মূল্য",
+      "orderDate": "অর্ডারের তারিখ",
+      "progress": "অগ্রগতি",
+      "cooperativeProgress": "সমবায় অগ্রগতি",
+      "estimatedDelivery": "আনুমানিক ডেলিভারি",
+      "viewDetails": "বিস্তারিত দেখুন",
+      "status": {
+        "confirmed": "নিশ্চিত",
+        "in_production": "উত্পাদনে",
+        "partially_shipped": "আংশিক পাঠানো হয়েছে",
+        "completed": "সম্পূর্ণ",
+        "cancelled": "বাতিল"
+      }
+    }
+  },
+  "secretary": {
+    "orders": {
+      "title": "অর্ডার পূর্ণতা",
+      "noOrders": "কোনো বরাদ্দকৃত অর্ডার নেই",
+      "orderId": "অর্ডার আইডি",
+      "buyerName": "ক্রেতার নাম",
+      "totalQuantity": "বরাদ্দকৃত কোটা",
+      "completedCount": "সম্পূর্ণ",
+      "shippedCount": "পাঠানো হয়েছে",
+      "status": "পূর্ণতা অবস্থা",
+      "markShipped": "পাঠানো হয়েছে চিহ্নিত করুন",
+      "shipped": "পাঠানো হয়েছে",
+      "trackingNumber": "ট্র্যাকিং নম্বর",
+      "enterTracking": "শিপিং ট্র্যাকিং নম্বর লিখুন",
+      "shipConfirm": "আপনি কি নিশ্চিত যে এই আইটেমটি পাঠানো হয়েছে চিহ্নিত করতে চান?",
+      "jobCards": "সংযুক্ত জব কার্ড",
+      "noJobCards": "কোনো জব কার্ড এখনো সংযুক্ত করা হয়নি"
+    }
   }
 }

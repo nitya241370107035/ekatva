@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, onAuthStateChanged, UserCredential } from 'firebase/auth';
+import { User, UserCredential } from 'firebase/auth';
 import { auth } from '../firebase/config';
-import { loginWithEmail, registerWithEmail, loginWithGoogle, logoutUser } from '../firebase/auth';
+import { loginWithEmail, registerWithEmail, loginWithGoogle, logoutUser, onAuthStateChanged } from '../firebase/auth';
 import { getUserProfile, createUserProfile, createWeaverProfile, ensureCooperative } from '../firebase/firestore';
 import { UserProfile, WeaverProfile } from '../types';
 
@@ -14,6 +14,7 @@ interface AuthContextType {
   loginDemo: (role: 'weaver' | 'secretary' | 'buyer') => Promise<UserProfile>;
   registerWeaver: (email: string, password: string, profileData: Omit<WeaverProfile, 'weaverId' | 'cooperativeId' | 'createdAt'>) => Promise<User>;
   registerProfile: (role: 'weaver' | 'secretary' | 'buyer', displayName: string, weaverDetails?: Omit<WeaverProfile, 'weaverId' | 'cooperativeId' | 'createdAt'>) => Promise<void>;
+  registerGeneric: (email: string, password: string, role: 'weaver' | 'secretary' | 'buyer', displayName: string, weaverDetails?: Omit<WeaverProfile, 'weaverId' | 'cooperativeId' | 'createdAt'>) => Promise<User>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -279,6 +280,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const registerGeneric = async (
+    email: string,
+    password: string,
+    role: 'weaver' | 'secretary' | 'buyer',
+    displayName: string,
+    weaverDetails?: Omit<WeaverProfile, 'weaverId' | 'cooperativeId' | 'createdAt'>
+  ): Promise<User> => {
+    setLoading(true);
+    try {
+      // 1. Create cooperative doc if "coop1" doesn't exist yet
+      await ensureCooperative('coop1');
+
+      // 2. Register user in Firebase Auth
+      const credential = await registerWithEmail(email, password);
+      const uid = credential.user.uid;
+
+      // 3. Create User Profile document in 'users' collection
+      const userProfileData: UserProfile = {
+        uid,
+        email,
+        role,
+        cooperativeId: 'coop1',
+        displayName,
+        createdAt: new Date().toISOString()
+      };
+      await createUserProfile(uid, userProfileData);
+
+      // 4. Create Weaver Profile document if role is weaver
+      if (role === 'weaver' && weaverDetails) {
+        const weaverProfileData: WeaverProfile = {
+          ...weaverDetails,
+          weaverId: uid,
+          cooperativeId: 'coop1',
+          createdAt: new Date().toISOString()
+        };
+        await createWeaverProfile(uid, weaverProfileData);
+      }
+
+      // Set states
+      setCurrentUser(credential.user);
+      setUserProfile(userProfileData);
+
+      return credential.user;
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       currentUser,
@@ -289,6 +340,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loginDemo,
       registerWeaver,
       registerProfile,
+      registerGeneric,
       logout,
       refreshProfile
     }}>

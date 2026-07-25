@@ -30,6 +30,8 @@ import { RFQOpportunities } from './pages/secretary/RFQOpportunities';
 import { BuyerDashboard } from './pages/buyer/Dashboard';
 import { Marketplace } from './pages/buyer/Marketplace';
 import { MyRFQs } from './pages/buyer/MyRFQs';
+import { MyOrders } from './pages/buyer/MyOrders';
+import { OrderFulfillment } from './pages/secretary/OrderFulfillment';
 import { TracePage } from './pages/public/TracePage';
 import { WeaverMyProducts } from './pages/weaver/MyProducts';
 import { SecretaryProductReview } from './pages/secretary/ProductReview';
@@ -262,6 +264,14 @@ export default function App() {
               </ProtectedRoute>
             } 
           />
+          <Route 
+            path="/secretary/orders" 
+            element={
+              <ProtectedRoute allowedRoles={['secretary']}>
+                <OrderFulfillment />
+              </ProtectedRoute>
+            } 
+          />
 
           {/* Buyer Protected Routes */}
           <Route 
@@ -285,6 +295,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['buyer']}>
                 <MyRFQs />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/buyer/orders" 
+            element={
+              <ProtectedRoute allowedRoles={['buyer']}>
+                <MyOrders />
               </ProtectedRoute>
             } 
           />

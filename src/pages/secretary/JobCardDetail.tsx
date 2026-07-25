@@ -11,11 +11,12 @@ import {
   updateWeaverReliabilityScore,
   createProductInstance,
   getProductsByCooperative,
-  getWeaverProfile
+  getWeaverProfile,
+  updateOrderItemProgress
 } from '../../firebase/firestore';
 import { db, storage } from '../../firebase/config';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { collection, query, where, getDocs, limit } from '../../firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from '../../firebase/storage';
 import { JobCard, JobCardStatusLog, ProductInstance, Product, WeaverProfile } from '../../types';
 import { generateHashChain } from '../../utils/hashUtils';
 import QRCode from 'react-qr-code';
@@ -209,6 +210,15 @@ export const JobCardDetail: React.FC = () => {
         wagePercentage: Number(((totalWage / finalPrice) * 100).toFixed(1)),
         productionSteps: hashedSteps
       });
+
+      if (jobCard.orderId && jobCard.orderItemId) {
+        await updateOrderItemProgress(
+          jobCard.orderId,
+          jobCard.orderItemId,
+          jobCard.quantity,
+          jobCardId
+        );
+      }
 
       setToastMessage(isEn
         ? 'QC passed successfully, wage payout recorded and digital traceability certificate (QR) generated!'

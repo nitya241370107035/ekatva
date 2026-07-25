@@ -4,37 +4,58 @@ import { getFirestore, doc, getDocFromServer, enableIndexedDbPersistence } from 
 import { getStorage } from 'firebase/storage';
 import firebaseConfig from '../../firebase-applet-config.json';
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
-export const storage = getStorage(app);
+export const isMock = !firebaseConfig.apiKey || firebaseConfig.apiKey.includes('...');
 
-// Enable offline persistence
-try {
-  enableIndexedDbPersistence(db);
-} catch (err: any) {
-  if (err.code === 'failed-precondition') {
-    console.warn('Offline persistence limited: multiple tabs open');
-  } else if (err.code === 'unimplemented') {
-    console.warn('Browser does not support offline persistence');
-  }
-}
+export let app: any;
+export let auth: any;
+export let db: any;
+export let storage: any;
 
-// Validate Connection to Firestore as per system instructions
-async function testConnection() {
+if (isMock) {
+  console.log("Ekatva: Running in OFFLINE MOCK MODE. No valid Firebase API key configured.");
+  app = { name: '[MockApp]' };
+  auth = { currentUser: null };
+  db = { type: 'MockFirestore', firestoreDatabaseId: firebaseConfig.firestoreDatabaseId };
+  storage = { type: 'MockStorage' };
+} else {
   try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
-    console.log("Ekatva: Connected to Firestore successfully.");
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.message.includes('offline')) {
-        console.error("Ekatva: Please check your Firebase configuration or internet connection.");
-      } else {
-        console.warn("Ekatva: Firestore connection test status:", error.message);
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+    storage = getStorage(app);
+
+    // Enable offline persistence
+    enableIndexedDbPersistence(db).catch((err: any) => {
+      if (err.code === 'failed-precondition') {
+        console.warn('Offline persistence limited: multiple tabs open');
+      } else if (err.code === 'unimplemented') {
+        console.warn('Browser does not support offline persistence');
       }
-    } else {
-      console.warn("Ekatva: Firestore connection test status:", error);
-    }
+    });
+
+    // Validate Connection to Firestore as per system instructions
+    const testConnection = async () => {
+      try {
+        await getDocFromServer(doc(db, 'test', 'connection'));
+        console.log("Ekatva: Connected to Firestore successfully.");
+      } catch (error) {
+        if (error instanceof Error) {
+          if (error.message.includes('offline')) {
+            console.error("Ekatva: Please check your Firebase configuration or internet connection.");
+          } else {
+            console.warn("Ekatva: Firestore connection test status:", error.message);
+          }
+        } else {
+          console.warn("Ekatva: Firestore connection test status:", error);
+        }
+      }
+    };
+    testConnection();
+  } catch (error) {
+    console.error("Firebase real initialization failed, fallback to mock mode:", error);
+    app = { name: '[MockApp]' };
+    auth = { currentUser: null };
+    db = { type: 'MockFirestore', firestoreDatabaseId: firebaseConfig.firestoreDatabaseId };
+    storage = { type: 'MockStorage' };
   }
 }
-testConnection();

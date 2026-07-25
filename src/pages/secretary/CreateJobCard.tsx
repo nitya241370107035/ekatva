@@ -5,9 +5,10 @@ import { SecretaryLayout } from '../../components/layout/SecretaryLayout';
 import { 
   getWeaversByCooperative, 
   getRawMaterialStock, 
-  createJobCard 
+  createJobCard,
+  getCooperativeOrderItems
 } from '../../firebase/firestore';
-import { WeaverProfile, RawMaterialStock, RawMaterialIssued } from '../../types';
+import { WeaverProfile, RawMaterialStock, RawMaterialIssued, OrderItem } from '../../types';
 import { ArrowLeft, Plus, Trash2, Calendar, ClipboardList } from 'lucide-react';
 import { Toast } from '../../components/ui/Toast';
 
@@ -24,11 +25,13 @@ export const CreateJobCard: React.FC = () => {
   const [stockList, setStockList] = useState<RawMaterialStock[]>([]);
   const [toastMessage, setToastMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [pendingOrderItems, setPendingOrderItems] = useState<OrderItem[]>([]);
 
   // Form states
   const [title, setTitle] = useState('');
   const [designCode, setDesignCode] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [selectedOrderItemId, setSelectedOrderItemId] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
   const [deadline, setDeadline] = useState('');
   const [wagePerPiece, setWagePerPiece] = useState(0);
@@ -53,15 +56,20 @@ export const CreateJobCard: React.FC = () => {
     const fetchData = async () => {
       if (!userProfile?.cooperativeId) return;
       try {
-        const [weaversData, stockData] = await Promise.all([
+        const [weaversData, stockData, orderItemsData] = await Promise.all([
           getWeaversByCooperative(userProfile.cooperativeId),
-          getRawMaterialStock(userProfile.cooperativeId)
+          getRawMaterialStock(userProfile.cooperativeId),
+          getCooperativeOrderItems(userProfile.cooperativeId)
         ]);
         setWeavers(weaversData);
         setStockList(stockData);
         if (weaversData.length > 0) {
           setAssignedTo(weaversData[0].weaverId);
         }
+        const pendingItems = orderItemsData.filter(
+          item => item.completedQuantity < item.allocatedQuantity && item.status !== 'shipped'
+        );
+        setPendingOrderItems(pendingItems);
       } catch (err) {
         console.error("Error fetching form requirements:", err);
       }
@@ -135,6 +143,7 @@ export const CreateJobCard: React.FC = () => {
     try {
       const selectedWeaver = weavers.find(w => w.weaverId === assignedTo);
       const assignedToName = selectedWeaver ? selectedWeaver.displayName : (isEn ? 'Weaver' : 'बुनकर');
+      const linkedItem = pendingOrderItems.find(o => o.orderItemId === selectedOrderItemId);
 
       await createJobCard({
         cooperativeId: userProfile.cooperativeId,
@@ -145,7 +154,9 @@ export const CreateJobCard: React.FC = () => {
         assignedToName,
         rawMaterialsIssued: materialsToIssue,
         deadline,
-        wagePerPiece: Number(wagePerPiece)
+        wagePerPiece: Number(wagePerPiece),
+        orderId: linkedItem ? linkedItem.orderId : undefined,
+        orderItemId: selectedOrderItemId || undefined
       }, currentUser.uid);
 
       setToastMessage(isEn ? 'Job card created successfully and stock deducted!' : 'कार्य कार्ड सफलतापूर्वक बनाया और स्टॉक से काटा गया!');
@@ -201,6 +212,39 @@ export const CreateJobCard: React.FC = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            
+            {/* Link to Buyer Order (RFQ) Option */}
+            {pendingOrderItems.length > 0 && (
+              <div className="bg-loom-sand/15 p-4 rounded-xl border border-loom-beige/60">
+                <label className="block text-sm font-heading font-bold text-loom-wood mb-1.5">
+                  {isEn ? "Link to Buyer Order Item (Optional)" : "क्रेता के ऑर्डर आइटम से जोड़ें (वैकल्पिक)"}
+                </label>
+                <select
+                  value={selectedOrderItemId}
+                  onChange={(e) => {
+                    setSelectedOrderItemId(e.target.value);
+                    const item = pendingOrderItems.find(o => o.orderItemId === e.target.value);
+                    if (item) {
+                      setTitle(`Fulfillment of Order #${item.orderId.substring(0, 8)}`);
+                      setQuantity(item.allocatedQuantity - item.completedQuantity);
+                    }
+                  }}
+                  className="w-full px-4 py-2.5 border-2 border-loom-beige rounded-xl focus:border-loom-gold focus:outline-none bg-white text-loom-ink font-heading"
+                >
+                  <option value="">{isEn ? "-- Select Order Item --" : "-- ऑर्डर आइटम चुनें --"}</option>
+                  {pendingOrderItems.map((item) => (
+                    <option key={item.orderItemId} value={item.orderItemId}>
+                      Order #{item.orderId.substring(0, 8)} - {item.cooperativeName} ({item.allocatedQuantity - item.completedQuantity} pieces remaining)
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-loom-ink-light mt-1.5">
+                  {isEn 
+                    ? "Linking this will automatically update the buyer's order tracking as weavers complete the work." 
+                    : "इसे संबद्ध करने से बुनकरों द्वारा कार्य पूर्ण करने पर क्रेता का ऑर्डर ट्रैकिंग स्वतः अपडेट हो जाएगा।"}
+                </p>
+              </div>
+            )}
             
             {/* Grid 1: Basic Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
